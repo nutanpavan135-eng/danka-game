@@ -1,0 +1,22 @@
+const EVENTS = {
+  CREATE_ROOM: "createRoom",
+  JOIN_ROOM: "joinRoom",
+  LEAVE_ROOM: "leaveRoom",
+  START_GAME: "startGame",
+  RUN_PLACE_CUT: "runPlaceCut",
+  CUT_DECK_AND_DEAL: "cutDeckAndDeal",
+  SEE_CARDS: "seeCards",
+  BLIND_BET: "blindBet",
+  OPEN_BET: "openBet",
+  DROP: "drop",
+  ASK_SIDE: "askSide",
+  ASK_SHOW: "askShow",
+  START_NEXT_ROUND: "startNextRound",
+  REQUEST_PLACE_CUT: "requestPlaceCut",
+  CONTINUE_SAME_PLAYERS: "continueSamePlayers",
+  LEAVE_GAME_AT_CYCLE_BREAK: "leaveGameAtCycleBreak",
+  END_SESSION: "endSession",
+  ROOM_UPDATED: "roomUpdated",
+  ERROR_MESSAGE: "errorMessage",
+};
+module.exports = { EVENTS };
