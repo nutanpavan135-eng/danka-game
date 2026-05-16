@@ -121,7 +121,7 @@ function CycleResultPanel({ room }) {
       <div className="between row wrap">
         <div>
           <h2>Previous Cycle Result</h2>
-          <p className="muted">Winner cards are highlighted. Cards stay visible until the next cut/deal.</p>
+          <p className="muted">Winner cards are highlighted. Cards stay visible until the next deal.</p>
         </div>
         <div className="winner-badge">{reveal.winnerName} won with {reveal.winningHand?.name}</div>
       </div>
@@ -158,25 +158,28 @@ function TableActionBanner({ room, playerId, permissions }) {
     text = permissions.canChooseSeat
       ? 'Your turn: choose your seat on the table. You will become the dealer.'
       : `Waiting for ${highest?.playerName || 'the highest card holder'} to choose a seat.`;
-  } else if (room.status === 'cutDeck') {
-    text = permissions.canCutDeck
-      ? 'Your turn: cut the deck. After you cut, the dealer will deal automatically.'
-      : `Waiting for ${permissions.cutterName || 'the cutter'} to cut the deck.`;
+  } else if (room.status === 'chooseOneCardMode') {
+    if (current?.id === playerId) text = 'Single-card special cycle: choose whether Highest Card Wins or Lowest Card Wins.';
+    else text = `Waiting for ${current?.name || "the dealer's left-side player"} to choose Highest or Lowest for the single-card cycle.`;
   } else if (room.status === 'betting') {
+    const singleCardText = room.roundType === 'one' ? ` Single-card rule: ${room.oneCardMode === 'lowest' ? 'Lowest Card Wins' : 'Highest Card Wins'}.` : '';
     if (current?.id === playerId) {
       if (permissions.canSeeCards && permissions.canBlindBet && permissions.canCut) text = 'Your turn: you may See Cards, Blind Bet, or use Cut.';
       else if (permissions.canSeeCards && permissions.canBlindBet) text = 'Your turn: you may See Cards or Blind Bet.';
-      else if (permissions.canOpenBet) text = 'Your turn: place an Open Bet, or use another valid action.';
+      else if (permissions.canOpenBet) text = `Your turn: place an Open Bet, or use another valid action.${singleCardText}`;
       else if (permissions.canDrop && permissions.canShow) text = 'Your turn: choose Drop or Show.';
       else if (permissions.canDrop && permissions.canSide) text = 'Your turn: choose Drop or Ask Side.';
-      else text = 'Your turn: take your next action.';
+      else text = `Your turn: take your next action.${singleCardText}`;
     } else {
-      text = `Waiting for ${current?.name || 'the current player'} to take an action.`;
+      text = `Waiting for ${current?.name || 'the current player'} to take an action.${singleCardText}`;
     }
   } else if (room.status === 'cycleBreak') {
     text = 'Cycle complete. Eligible players can request Place Cut, leave at round break, or continue with the same players.';
   } else if (room.status === 'roundOver') {
-    text = 'Round complete. Review the result on the right.';
+    const dealer = room.players[room.dealerIndex];
+    text = permissions.canStartNextRound
+      ? 'You won the previous cycle. Click Deal Next Cycle when you are ready to distribute the next hand.'
+      : `Waiting for ${dealer?.name || 'the dealer'} to deal the next cycle.`;
   }
 
   if (!text) return null;
@@ -184,106 +187,236 @@ function TableActionBanner({ room, playerId, permissions }) {
 }
 
 
-function PlayerTableSeat({ player, index, n, room, playerId, actions }) {
+
+function getPerspectivePosition(relativeIndex, n) {
+  if (relativeIndex === 0) return { x: 50, y: 78, scale: 1.12, zone: 'me' };
+
+  const preset = {
+    2: { 1: { x: 50, y: 22, scale: 0.9, zone: 'far' } },
+    3: {
+      1: { x: 82, y: 30, scale: 0.92, zone: 'side' },
+      2: { x: 18, y: 30, scale: 0.92, zone: 'side' },
+    },
+    4: {
+      1: { x: 82, y: 36, scale: 0.92, zone: 'side' },
+      2: { x: 50, y: 20, scale: 0.88, zone: 'far' },
+      3: { x: 18, y: 36, scale: 0.92, zone: 'side' },
+    },
+    5: {
+      1: { x: 80, y: 44, scale: 0.94, zone: 'side' },
+      2: { x: 64, y: 22, scale: 0.88, zone: 'far' },
+      3: { x: 36, y: 22, scale: 0.88, zone: 'far' },
+      4: { x: 20, y: 44, scale: 0.94, zone: 'side' },
+    },
+  };
+
+  if (preset[n] && preset[n][relativeIndex]) return preset[n][relativeIndex];
+
+  const rx = n <= 6 ? 44 : 46;
+  const ry = n <= 6 ? 35 : 38;
+  const angle = 90 - (360 * relativeIndex) / n;
+  const x = 50 + rx * Math.cos((Math.PI / 180) * angle);
+  const y = 50 + ry * Math.sin((Math.PI / 180) * angle);
+  const frontScale = y > 68 ? 1.02 : y < 30 ? 0.86 : 0.94;
+  return { x, y, scale: frontScale, zone: y > 70 ? 'near' : y < 35 ? 'far' : 'side' };
+}
+
+function roleTextForPlayer(room, playerIndex, n) {
+  if (playerIndex === room.dealerIndex) return 'Dealer';
+  if (playerIndex === (room.dealerIndex + 1) % n) return 'First Turn';
+  return 'Player';
+}
+
+function TableSeatCards({ player, isMe, revealAllowed }) {
+  const count = Math.max(player.cardCount || 0, player.cards?.length || 0);
+  if (!count) return null;
+  return (
+    <div className={`table-seat-cards ${isMe ? 'my-table-cards' : 'opponent-table-cards'}`}>
+      {Array.from({ length: count }).map((_, i) => {
+        const card = player.cards?.[i];
+        const hidden = !revealAllowed || player.cardsHidden || !card;
+        const rotation = (i - (count - 1) / 2) * (isMe ? 5 : 3);
+        return (
+          <div key={i} className="table-card-wrap" style={{ transform: `rotate(${rotation}deg)` }}>
+            <PlayingCard card={card} hidden={hidden} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId, actions }) {
   const pick = room.placeCut?.picks?.find((p) => p.playerId === player.id);
   const showSeatNumbers = room.status === 'chooseSeat';
   const canChooseSeat = room.status === 'chooseSeat' && room.placeCut?.highestPlayerId === playerId;
-  const roleText = index === room.dealerIndex
-    ? 'Dealer'
-    : index === (room.dealerIndex + 1) % n
-      ? 'Cutter'
-      : index === (room.dealerIndex + n - 1) % n
-        ? 'First Turn'
-        : 'Player';
-
-  // Midpoint angles place players on the table sides, not the sharp polygon corners.
-  const angle = -90 + (180 / n) + (360 * index) / n;
-  const radius = n <= 4 ? 41 : n <= 6 ? 38 : 40;
-  const x = 50 + radius * Math.cos((Math.PI / 180) * angle);
-  const y = 50 + radius * Math.sin((Math.PI / 180) * angle);
+  const roleText = roleTextForPlayer(room, playerIndex, n);
+  const pos = getPerspectivePosition(relativeIndex, n);
+  const isMe = player.id === playerId;
+  const isCurrentTurn = room.players[room.turnIndex]?.id === player.id;
+  const showTableCards = ['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status);
+  const revealAllowed = isMe || ['roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) || !player.cardsHidden;
 
   return (
     <button
       type="button"
       disabled={!canChooseSeat}
-      onClick={() => actions.chooseSeat(index)}
-      className={`seat avatar-seat ${index === room.dealerIndex ? 'dealer' : ''} ${index === (room.dealerIndex + 1) % n ? 'cutter' : ''} ${canChooseSeat ? 'clickable-seat' : ''}`}
-      style={{ left: `${x}%`, top: `${y}%` }}
+      onClick={() => actions.chooseSeat(playerIndex)}
+      className={`seat avatar-seat perspective-seat ${isMe ? 'my-seat' : ''} ${isCurrentTurn ? 'active-player-seat' : ''} ${playerIndex === room.dealerIndex ? 'dealer' : ''} ${canChooseSeat ? 'clickable-seat' : ''}`}
+      style={{ left: `${pos.x}%`, top: `${pos.y}%`, '--seat-scale': pos.scale }}
     >
-      {showSeatNumbers && <div className="seat-label">Seat {index + 1}</div>}
+      {showSeatNumbers && <div className="seat-label">Seat {playerIndex + 1}</div>}
       <div className="avatar"><span className="avatar-head" /><span className="avatar-body" /></div>
       <b>{room.status === 'chooseSeat' ? 'Choose here' : player.name}</b>
       <small>{room.status === 'chooseSeat' ? 'Available seat' : roleText}</small>
-      {pick?.card && <div className="seat-pick"><PlayingCard card={pick.card} /></div>}
-      {pick?.hasPicked && !pick?.card && <div className="seat-pick-mini">Picked</div>}
+      {showTableCards && <TableSeatCards player={player} isMe={isMe} revealAllowed={revealAllowed} />}
+      {['placeCut', 'chooseSeat'].includes(room.status) && pick?.card && <div className="seat-pick"><PlayingCard card={pick.card} /></div>}
+      {['placeCut', 'chooseSeat'].includes(room.status) && pick?.hasPicked && !pick?.card && <div className="seat-pick-mini">Picked</div>}
     </button>
   );
 }
 
-function SeatTable({ room, playerId, actions }) {
-  if (!['placeCut', 'chooseSeat', 'cutDeck', 'betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status)) return null;
+
+function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCardMode, setOneCardMode }) {
+  if (!['placeCut', 'chooseSeat', 'chooseOneCardMode', 'betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status)) return null;
   const n = room.players.length;
   const dealer = room.players[room.dealerIndex];
-  const cutter = room.players[(room.dealerIndex + 1) % n];
   const permissions = getPermissions(room, playerId);
+  const myIndex = Math.max(0, room.players.findIndex((p) => p.id === playerId));
+  const perspectivePlayers = room.players.map((player, playerIndex) => ({
+    player,
+    playerIndex,
+    relativeIndex: (playerIndex - myIndex + n) % n,
+  }));
 
   return (
-    <section className="seat-table-panel table-half-panel">
-      <div className="between row wrap table-header-mini">
+    <section className="seat-table-panel table-half-panel perspective-table-panel">
+      <div className="between row wrap table-header-mini perspective-header">
         <div>
           <h2>Danka Table</h2>
-          <p className="muted">Dealer: <b>{dealer?.name || '-'}</b> • Cutter: <b>{cutter?.name || '-'}</b></p>
+          <p className="muted">Dealer: <b>{dealer?.name || '-'}</b></p>
         </div>
-        <p className="muted">{n}-player table</p>
+        <p className="muted">{n}-player table • your perspective</p>
       </div>
 
       <TableActionBanner room={room} playerId={playerId} permissions={permissions} />
 
-      <div className="seats polygon-seats big-table-stage" style={{ '--player-count': n }}>
-        <div className="table-center polygon-table real-table" style={{ clipPath: `polygon(${polygonPoints(n)})` }}>
-          {['cutDeck', 'betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
+      <div className="seats polygon-seats big-table-stage perspective-stage" style={{ '--player-count': n }}>
+        <div className="table-center polygon-table real-table perspective-felt-table">
+          {['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
         </div>
 
         <PlaceCutDeck room={room} playerId={playerId} actions={actions} />
         <PlaceCutRanking room={room} playerId={playerId} actions={actions} />
 
-        {room.players.map((player, index) => (
-          <PlayerTableSeat key={player.id} player={player} index={index} n={n} room={room} playerId={playerId} actions={actions} />
+        {perspectivePlayers.map(({ player, playerIndex, relativeIndex }) => (
+          <PlayerTableSeat
+            key={player.id}
+            player={player}
+            playerIndex={playerIndex}
+            relativeIndex={relativeIndex}
+            n={n}
+            room={room}
+            playerId={playerId}
+            actions={actions}
+          />
         ))}
+
+        <div className="table-action-dock">
+          <ActionButtons
+            room={room}
+            playerId={playerId}
+            actions={actions}
+            cutPercent={cutPercent}
+            setCutPercent={setCutPercent}
+            oneCardMode={oneCardMode}
+            setOneCardMode={setOneCardMode}
+            showCutPanel={false}
+          />
+        </div>
       </div>
     </section>
   );
 }
 
 export default function App() {
-  const [name, setName] = useState('Nutan');
+  const [entryMode, setEntryMode] = useState('choose');
+  const [createName, setCreateName] = useState('Nutan');
+  const [joinName, setJoinName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [startingCoins, setStartingCoins] = useState(100);
+  const [cyclesPerRound, setCyclesPerRound] = useState(6);
   const [cutPercent, setCutPercent] = useState(50);
   const [oneCardMode, setOneCardMode] = useState('highest');
   const danka = useDankaRoom();
   const { connected, room, roomCode, playerId, error, createRoom, joinRoom } = danka;
 
+  function resetEntry() {
+    setEntryMode('choose');
+    setJoinCode('');
+  }
+
   if (!room) {
     return (
-      <main className="page home">
-        <section className="hero">
+      <main className="page home entry-home">
+        <section className="hero entry-hero">
           <h1>DANKA</h1>
-          <p>Prototype 3.9 — seat direction fix, clearer results, action banner, and improved pot chips.</p>
+          <p>Prototype 5.11 — side fix and single-card mode confirmation.</p>
           <p className={connected ? 'ok' : 'bad'}>{connected ? 'Backend connected' : 'Backend not connected'}</p>
         </section>
-        <section className="panel form">
-          <label>Your Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} />
-          <label>Starting Coins</label>
-          <input type="number" value={startingCoins} onChange={(e) => setStartingCoins(Number(e.target.value))} />
-          <button onClick={() => createRoom({ playerName: name, startingCoins })}>Create Room</button>
-          <hr />
-          <label>Room Code</label>
-          <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} />
-          <button onClick={() => joinRoom({ roomCode: joinCode, playerName: name })}>Join Room</button>
-          {error && <p className="error">{error}</p>}
-        </section>
+
+        {entryMode === 'choose' && (
+          <section className="panel entry-choice-panel">
+            <h2>Welcome to Danka</h2>
+            <p className="muted entry-muted">Choose how you want to enter the game.</p>
+            <div className="entry-choice-grid">
+              <button className="entry-card-button" onClick={() => setEntryMode('create')}>
+                <span>Create Room</span>
+                <small>Start a new table and become the admin.</small>
+              </button>
+              <button className="entry-card-button secondary-choice" onClick={() => setEntryMode('join')}>
+                <span>Join Room</span>
+                <small>Enter a room code shared by your friend.</small>
+              </button>
+            </div>
+            {error && <p className="error">{error}</p>}
+          </section>
+        )}
+
+        {entryMode === 'create' && (
+          <section className="panel form entry-form-panel">
+            <div className="entry-form-head">
+              <button className="back-link" onClick={resetEntry}>← Back</button>
+              <h2>Create Room</h2>
+              <p className="muted">Enter your name, starting coins, and how many cycles should make one round.</p>
+            </div>
+            <label>Your Name</label>
+            <input value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder="Enter your name" />
+            <label>Coins Per Person</label>
+            <input type="number" min="1" value={startingCoins} onChange={(e) => setStartingCoins(Number(e.target.value))} />
+            <label>Cycles Per Round</label>
+            <input type="number" min="1" max="50" value={cyclesPerRound} onChange={(e) => setCyclesPerRound(Number(e.target.value))} />
+            <p className="muted tiny-help">After this many completed cycles, players can request Place Cut, continue with the same players, or leave at the round break.</p>
+            <button onClick={() => createRoom({ playerName: createName, startingCoins, cyclesPerRound })}>Create Room</button>
+            {error && <p className="error">{error}</p>}
+          </section>
+        )}
+
+        {entryMode === 'join' && (
+          <section className="panel form entry-form-panel">
+            <div className="entry-form-head">
+              <button className="back-link" onClick={resetEntry}>← Back</button>
+              <h2>Join Room</h2>
+              <p className="muted">Enter your name and the room code shared by the room admin.</p>
+            </div>
+            <label>Your Name</label>
+            <input value={joinName} onChange={(e) => setJoinName(e.target.value)} placeholder="Enter your name" />
+            <label>Room Code</label>
+            <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="Enter room code" />
+            <button onClick={() => joinRoom({ roomCode: joinCode, playerName: joinName })}>Join Room</button>
+            {error && <p className="error">{error}</p>}
+          </section>
+        )}
       </main>
     );
   }
@@ -302,6 +435,7 @@ export default function App() {
         <div className="top-right-controls">
           <RoomCodeBadge code={roomCode} />
           {permissions.canStartGame && <button onClick={danka.startGame}>Start Game</button>}
+          {room.status === 'sessionEnded' && <button onClick={danka.startNewGame}>Start New Game</button>}
           {permissions.canEndSession && <button className="danger" onClick={danka.endSession}>End Session</button>}
         </div>
       </header>
@@ -311,28 +445,21 @@ export default function App() {
 
       <section className="game-split game-split-38">
         <div className="table-half">
-          <SeatTable room={room} playerId={playerId} actions={danka} />
+          <SeatTable room={room} playerId={playerId} actions={danka} cutPercent={cutPercent} setCutPercent={setCutPercent} oneCardMode={oneCardMode} setOneCardMode={setOneCardMode} />
         </div>
 
         <div className="control-half">
           <CycleResultPanel room={room} />
-          <section className="action-panel">
+          <section className="action-panel status-panel-54">
             <div className="control-head">
               <div>
-                <h2>Controls</h2>
-                <p className="muted">Only valid actions are shown here.</p>
+                <h2>Game Status</h2>
+                <p className="muted">Main action buttons now appear beside your seat area.</p>
               </div>
               <div className="mini-pot">{room.status}</div>
             </div>
-            <ActionButtons
-              room={room}
-              playerId={playerId}
-              actions={danka}
-              cutPercent={cutPercent}
-              setCutPercent={setCutPercent}
-              oneCardMode={oneCardMode}
-              setOneCardMode={setOneCardMode}
-            />
+            <p className="hint waiting-text">Watch the table banner and use the buttons near your seat when it is your turn.</p>
+            {room.status === 'sessionEnded' && <button onClick={danka.startNewGame}>Start New Game</button>}
           </section>
 
           <section className="players-panel">
@@ -343,7 +470,7 @@ export default function App() {
               ))}
             </div>
             <SettlementPanel room={room} />
-          </section>
+</section>
         </div>
       </section>
     </main>

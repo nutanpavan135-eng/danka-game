@@ -1,52 +1,30 @@
-# Danka Game — Prototype 5.0 Deployment Ready
+# Danka Game — Prototype 5.9 Final No-Cutter Flow
 
-This version is based on the stable Prototype 4.3 UI and is prepared for online deployment.
+This version keeps the Prototype 5.8 visual direction but makes the requested rule and visibility fixes.
 
-## What changed in 5.0
+## What changed in 5.9
 
-- Frontend can connect to an online backend using `VITE_SERVER_URL`.
-- Backend supports hosted CORS configuration using `CLIENT_ORIGIN`.
-- Local testing still works using `localhost`.
+- Removed the pre-game cutter step from the whole game flow.
+- After Place Cut seat selection, the dealer deals directly every time.
+- No Cut Deck waiting/control step should appear after Place Cut, including after later round breaks.
+- Perfect Cut is now probability-based during system dealing, not based on a manual cutter.
+- Bottom/current-player profile blur/glow overlay has been removed.
+- Action buttons are kept as separate simple buttons without a shared blurry background panel.
 
 ## Local run
 
-Open two terminals.
-
-### Backend
-
+Backend:
 ```bash
 cd server
 npm install
 npm run dev
 ```
 
-### Frontend
-
+Frontend:
 ```bash
 cd client
 npm install
 npm run dev
 ```
 
-Open:
-
-```txt
-http://localhost:5173
-```
-
-## Deployment notes
-
-Backend hosting will use the `server` folder.
-Frontend hosting will use the `client` folder.
-
-Frontend environment variable required for online deployment:
-
-```txt
-VITE_SERVER_URL=https://YOUR-BACKEND-URL
-```
-
-Backend environment variable for early testing:
-
-```txt
-CLIENT_ORIGIN=*
-```
+Open http://localhost:5173

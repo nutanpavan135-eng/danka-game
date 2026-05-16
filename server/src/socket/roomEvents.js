@@ -6,11 +6,13 @@ const { createDeck, shuffleDeck } = require("../gameLogic/cards");
 const { LIMITS } = require("../../../shared/ruleConstants");
 
 function registerRoomEvents(io, socket) {
-  socket.on("createRoom", ({ playerName, startingCoins }, callback) => {
+  socket.on("createRoom", ({ playerName, startingCoins, cyclesPerRound }, callback) => {
     const safeCoins = Number(startingCoins) > 0 ? Number(startingCoins) : 100;
+    const rawCycles = Number(cyclesPerRound);
+    const safeCyclesPerRound = Number.isFinite(rawCycles) && rawCycles > 0 ? Math.max(1, Math.min(Math.floor(rawCycles), 50)) : calculateCycleTarget(2);
     const roomCode = generateRoomCode();
     const adminPlayer = createPlayer({ socketId: socket.id, name: playerName, isAdmin: true, startingCoins: safeCoins });
-    const room = createRoom({ roomCode, adminPlayer, startingCoins: safeCoins });
+    const room = createRoom({ roomCode, adminPlayer, startingCoins: safeCoins, cyclesPerRound: safeCyclesPerRound });
     rooms.set(roomCode, room);
     socket.join(roomCode);
     callback?.({ success: true, roomCode, playerId: adminPlayer.id, room: getRoomStateForPlayer(room, adminPlayer.id) });
@@ -39,7 +41,7 @@ function registerRoomEvents(io, socket) {
     if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can start." });
     if (room.players.length < LIMITS.MIN_PLAYERS) return callback?.({ success: false, error: "At least 2 players required." });
     room.status = "placeCut";
-    room.cycleTarget = calculateCycleTarget(room.players.length);
+    room.cycleTarget = room.cyclesPerRound || calculateCycleTarget(room.players.length);
     room.placeCutDeck = shuffleDeck(createDeck());
     room.placeCutPicks = [];
     room.placeCutOrder = [];

@@ -6,7 +6,7 @@ const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSoc
 
 function previousActiveIndex(room, fromIndex) {
   for (let step = 1; step <= room.players.length; step++) {
-    const idx = (fromIndex + step) % room.players.length;
+    const idx = (fromIndex - step + room.players.length) % room.players.length;
     if (!room.players[idx].folded) return idx;
   }
   return fromIndex;
@@ -19,7 +19,7 @@ function clearSideReveal(room) {
 
 function hasLaterActiveBlindPlayer(room, fromIndex) {
   for (let step = 1; step < room.players.length; step++) {
-    const idx = (fromIndex - step + room.players.length) % room.players.length;
+    const idx = (fromIndex + step) % room.players.length;
     const player = room.players[idx];
     if (player.folded) continue;
     if (!player.sawCards) return true;

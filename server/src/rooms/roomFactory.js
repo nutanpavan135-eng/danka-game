@@ -24,12 +24,13 @@ function createPlayer({ socketId, name, isAdmin, startingCoins }) {
   };
 }
 
-function createRoom({ roomCode, adminPlayer, startingCoins }) {
+function createRoom({ roomCode, adminPlayer, startingCoins, cyclesPerRound }) {
   return {
     roomCode,
     adminPlayerId: adminPlayer.id,
     status: "lobby",
     startingCoins,
+    cyclesPerRound,
     players: [adminPlayer],
     deck: [],
     pot: 0,
@@ -39,7 +40,7 @@ function createRoom({ roomCode, adminPlayer, startingCoins }) {
     oneCardMode: "highest",
     specialQueue: [],
     completedRounds: 0,
-    cycleTarget: 0,
+    cycleTarget: Number(cyclesPerRound) > 0 ? Number(cyclesPerRound) : 0,
     lastActionMessage: `${adminPlayer.name} created the room.`,
     settlement: null,
     placeCutDeck: [],

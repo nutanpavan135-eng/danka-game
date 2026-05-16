@@ -1,7 +1,7 @@
 function previousActivePlayer(room, fromIndex) {
   if (!room?.players?.length) return null;
   for (let step = 1; step <= room.players.length; step++) {
-    const idx = (fromIndex + step) % room.players.length;
+    const idx = (fromIndex - step + room.players.length) % room.players.length;
     if (!room.players[idx].folded) return room.players[idx];
   }
   return null;
@@ -11,7 +11,7 @@ function previousActivePlayer(room, fromIndex) {
 function hasLaterActiveBlindPlayer(room, fromIndex) {
   if (!room?.players?.length) return false;
   for (let step = 1; step < room.players.length; step++) {
-    const idx = (fromIndex - step + room.players.length) % room.players.length;
+    const idx = (fromIndex + step) % room.players.length;
     const player = room.players[idx];
     if (player?.folded) continue;
     if (!player?.sawCards) return true;
@@ -28,9 +28,10 @@ export function getPermissions(room, playerId) {
   const isAdmin = room.adminPlayerId === playerId;
   const allOpen = active.every((p) => p.sawCards);
   const dealer = room.players[room.dealerIndex];
-  const cutterIndex = room.players.length > 0 ? (room.dealerIndex + 1) % room.players.length : -1;
-  const cutter = room.players[cutterIndex];
-  const isCutter = cutter?.id === playerId;
+  const dealerIsMe = dealer?.id === playerId;
+  const dealerLeftIndex = room.players.length > 0 ? (room.dealerIndex - 1 + room.players.length) % room.players.length : -1;
+  const dealerLeftPlayer = room.players[dealerLeftIndex];
+  const canChooseOneCardMode = room.status === 'chooseOneCardMode' && dealerLeftPlayer?.id === playerId;
   const hasPickedPlaceCut = room.placeCut?.picks?.some((pick) => pick.playerId === playerId);
   const isHighestPicker = room.placeCut?.highestPlayerId === playerId;
   const prevActive = previousActivePlayer(room, room.turnIndex);
@@ -40,16 +41,14 @@ export function getPermissions(room, playerId) {
 
   return {
     isAdmin,
-    isCutter,
     dealerName: dealer?.name,
-    cutterName: cutter?.name,
     hasPickedPlaceCut,
     isHighestPicker,
     canStartGame: room.status === 'lobby' && isAdmin && room.players.length >= 2,
     canPickPlaceCutCard: room.status === 'placeCut' && me && !hasPickedPlaceCut,
     canRunPlaceCut: room.status === 'placeCut' && isAdmin,
     canChooseSeat: room.status === 'chooseSeat' && isHighestPicker,
-    canCutDeck: room.status === 'cutDeck' && isCutter,
+    canCutDeck: false,
     canSeeCards: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded,
     canBlindBet: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1 && (!previousIsOpen || cutLocked),
     canCut: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1 && previousIsOpen && !cutLocked && laterBlindExists,
@@ -57,10 +56,11 @@ export function getPermissions(room, playerId) {
     canDrop: room.status === 'betting' && isMyTurn && me && !me.folded,
     canShow: room.status === 'betting' && isMyTurn && active.length === 2 && me?.coins >= 2,
     canSide: room.status === 'betting' && isMyTurn && active.length > 2 && allOpen && me?.sawCards && me?.coins >= 2,
-    canStartNextRound: false,
+    canStartNextRound: room.status === 'roundOver' && dealerIsMe,
+    canChooseOneCardMode,
     canRequestPlaceCut: room.status === 'cycleBreak',
     canContinueSamePlayers: room.status === 'cycleBreak' && isAdmin,
     canLeaveAtCycleBreak: room.status === 'cycleBreak',
-    canEndSession: isAdmin,
+    canEndSession: isAdmin && ['lobby', 'cycleBreak', 'roundOver'].includes(room.status),
   };
 }

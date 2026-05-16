@@ -31,9 +31,9 @@ export function useDankaRoom() {
     });
   }
 
-  function createRoom({ playerName, startingCoins }) {
+  function createRoom({ playerName, startingCoins, cyclesPerRound }) {
     setError('');
-    socket.emit('createRoom', { playerName, startingCoins }, (response) => {
+    socket.emit('createRoom', { playerName, startingCoins, cyclesPerRound }, (response) => {
       if (!response?.success) return setError(response?.error || 'Unable to create room.');
       setRoomCode(response.roomCode);
       setPlayerId(response.playerId);
@@ -51,6 +51,13 @@ export function useDankaRoom() {
     });
   }
 
+  function startNewGame() {
+    setError('');
+    setRoom(null);
+    setRoomCode('');
+    setPlayerId('');
+  }
+
   function pickPlaceCutCard(deckIndex = null) {
     setError('');
     socket.emit('pickPlaceCutCard', { roomCode, deckIndex }, (response) => {
@@ -60,7 +67,7 @@ export function useDankaRoom() {
 
   return {
     connected, room, roomCode, playerId, error,
-    createRoom, joinRoom,
+    createRoom, joinRoom, startNewGame,
     startGame: () => emitAction('startGame'),
     pickPlaceCutCard,
     runPlaceCut: () => emitAction('runPlaceCut'),
@@ -74,6 +81,7 @@ export function useDankaRoom() {
     askShow: () => emitAction('askShow'),
     askSide: () => emitAction('askSide'),
     startNextRound: () => emitAction('startNextRound'),
+    chooseOneCardMode: (mode) => emitAction('chooseOneCardMode', { mode }),
     requestPlaceCut: () => emitAction('requestPlaceCut'),
     continueSamePlayers: () => emitAction('continueSamePlayers'),
     leaveGameAtCycleBreak: () => emitAction('leaveGameAtCycleBreak'),

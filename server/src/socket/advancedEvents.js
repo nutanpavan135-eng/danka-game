@@ -1,9 +1,21 @@
 const { rooms } = require("../rooms/roomStore");
 const { broadcastPrivateRoomState } = require("../rooms/roomState");
 const { evaluateHand, compareScores } = require("../gameLogic/handEvaluator");
-const { completeRound, startNextRoundFromRoundOver, prepareFreshCycle } = require("../gameLogic/roundFlow");
+const { completeRound, startNextRoundFromRoundOver, prepareFreshCycle, dealCardsDirectly } = require("../gameLogic/roundFlow");
 const { calculateSettlement } = require("../gameLogic/settlement");
-const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket, findLeftActiveIndex } = require("../rooms/roomHelpers");
+const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket, findPreviousActiveIndex, findDealerLeftIndex } = require("../rooms/roomHelpers");
+
+function compareSideCards(requesterCards, opponentCards) {
+  const a = [...(requesterCards || [])].sort((x, y) => y.value - x.value);
+  const b = [...(opponentCards || [])].sort((x, y) => y.value - x.value);
+  const max = Math.max(a.length, b.length);
+  for (let i = 0; i < max; i++) {
+    const av = a[i]?.value || 0;
+    const bv = b[i]?.value || 0;
+    if (av !== bv) return av - bv;
+  }
+  return 0;
+}
 
 function registerAdvancedEvents(io, socket) {
   socket.on("askSide", ({ roomCode }, callback) => {
@@ -17,7 +29,7 @@ function registerAdvancedEvents(io, socket) {
     const requester = getCurrentPlayer(room);
     if (!requester.sawCards) return callback?.({ success: false, error: "You must be Open before Side." });
     if (requester.coins < 2) return callback?.({ success: false, error: "Not enough coins." });
-    const opponentIndex = findLeftActiveIndex(room, room.turnIndex);
+    const opponentIndex = findPreviousActiveIndex(room, room.turnIndex);
     const opponent = room.players[opponentIndex];
     requester.coins -= 2;
     requester.status = "Asked Side";
@@ -27,7 +39,9 @@ function registerAdvancedEvents(io, socket) {
       participantIds: [requester.id, opponent.id],
       message: `${requester.name} asked Side with ${opponent.name}. Only these two players can view each other's cards for this Side comparison.`,
     };
-    const comparison = compareScores(evaluateHand(requester.cards, room.roundType, room.oneCardMode), evaluateHand(opponent.cards, room.roundType, room.oneCardMode));
+    const comparison = compareSideCards(requester.cards, opponent.cards);
+    // Side uses card-by-card rank comparison: highest card first, then second, then third.
+    // If all card ranks are tied, the requester loses/drops.
     const winner = comparison > 0 ? requester : opponent;
     const loser = comparison > 0 ? opponent : requester;
     loser.folded = true;
@@ -44,11 +58,31 @@ function registerAdvancedEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
+
+  socket.on("chooseOneCardMode", ({ roomCode, mode }, callback) => {
+    const room = rooms.get(String(roomCode || "").trim());
+    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (room.status !== "chooseOneCardMode") return callback?.({ success: false, error: "Single-card mode choice is not available now." });
+    const chooserIndex = findDealerLeftIndex(room);
+    const chooser = room.players[chooserIndex];
+    if (!chooser || chooser.socketId !== socket.id) {
+      return callback?.({ success: false, error: `Only ${chooser?.name || "the dealer's left-side player"} can choose Highest or Lowest for this single-card cycle.` });
+    }
+    const selectedMode = mode === "lowest" ? "lowest" : "highest";
+    room.oneCardMode = selectedMode;
+    room.roundType = "one";
+    const label = selectedMode === "lowest" ? "Lowest Card Wins" : "Highest Card Wins";
+    dealCardsDirectly(room, `${chooser.name} confirmed ${label} for this single-card cycle.`);
+    callback?.({ success: true });
+    broadcastPrivateRoomState(io, room);
+  });
+
   socket.on("startNextRound", ({ roomCode }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found." });
     if (room.status !== "roundOver") return callback?.({ success: false, error: "Next round only after round over." });
-    if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can start next round." });
+    const dealer = room.players[room.dealerIndex];
+    if (dealer?.socketId !== socket.id) return callback?.({ success: false, error: `Only ${dealer?.name || "the dealer"} can deal the next cycle.` });
     startNextRoundFromRoundOver(room);
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
@@ -100,6 +134,10 @@ function registerAdvancedEvents(io, socket) {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found." });
     if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can end session." });
+    const safeEndStatuses = ["lobby", "cycleBreak", "roundOver"];
+    if (!safeEndStatuses.includes(room.status)) {
+      return callback?.({ success: false, error: "End Session is available only after the current cycle is finished." });
+    }
     room.status = "sessionEnded";
     room.settlement = calculateSettlement(room.players);
     room.lastActionMessage = "Session ended. Final settlement generated.";
