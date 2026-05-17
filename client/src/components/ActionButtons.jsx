@@ -10,7 +10,7 @@ export default function ActionButtons({ room, playerId, actions }) {
   if (p.canCut) leftButtons.push(<button key="cut" onClick={actions.cut}>Cut</button>);
 
   if (p.canOpenBet) rightButtons.push(<button key="open" onClick={actions.openBet}>Open Bet</button>);
-  if (p.canDrop) rightButtons.push(<button key="drop" onClick={actions.drop}>Drop</button>);
+  if (p.canDrop) rightButtons.push(<button key="drop" className="drop-action" onClick={actions.drop}>Drop</button>);
   if (p.canSide) rightButtons.push(<button key="side" onClick={actions.askSide}>Ask Side</button>);
   if (p.canShow) rightButtons.push(<button key="show" onClick={actions.askShow}>Show</button>);
   if (p.canStartNextRound) rightButtons.push(<button key="dealnext" onClick={actions.startNextRound}>Deal Next Cycle</button>);

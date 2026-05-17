@@ -50,7 +50,7 @@ export function getPermissions(room, playerId) {
     canChooseSeat: room.status === 'chooseSeat' && isHighestPicker,
     canCutDeck: false,
     canSeeCards: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded,
-    canBlindBet: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1 && (!previousIsOpen || cutLocked),
+    canBlindBet: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1,
     canCut: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1 && previousIsOpen && !cutLocked && laterBlindExists,
     canOpenBet: room.status === 'betting' && isMyTurn && me && me.sawCards && me.coins >= 2,
     canDrop: room.status === 'betting' && isMyTurn && me && !me.folded,

@@ -12,7 +12,7 @@ export function useDankaRoom() {
     connectSocket();
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
-    const onRoomUpdated = (updatedRoom) => setRoom(updatedRoom);
+    const onRoomUpdated = (updatedRoom) => { setError(""); setRoom(updatedRoom); };
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('roomUpdated', onRoomUpdated);
@@ -25,7 +25,7 @@ export function useDankaRoom() {
 
   function emitAction(event, payload = {}) {
     setError('');
-    socket.emit(event, { roomCode, ...payload }, (response) => {
+    socket.emit(event, { roomCode, playerId, ...payload }, (response) => {
       if (!response?.success) setError(response?.error || `Unable to complete ${event}.`);
       if (response?.room) setRoom(response.room);
     });

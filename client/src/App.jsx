@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDankaRoom } from './hooks/useDankaRoom';
 import PlayerSeat from './components/PlayerSeat';
 import PlayingCard from './components/PlayingCard';
@@ -28,19 +28,12 @@ function potChipCount(pot) {
 }
 
 function PotOnTable({ pot }) {
-  const count = potChipCount(pot);
   return (
-    <div className="real-pot" aria-label={`Pot ${pot} coins`}>
-      <div className="pot-top">
-        <div className="pot-bowl-shell" />
-        <div className="chip-pile">
-          {Array.from({ length: count }).map((_, index) => {
-            const colors = ['chip-red', 'chip-blue', 'chip-green', 'chip-gold'];
-            const x = ((index % 4) - 1.5) * 14 + (Math.floor(index / 4) % 2 ? 4 : -4);
-            const y = (Math.floor(index / 4) - 1) * -8;
-            return <span key={index} className={`table-chip ${colors[index % colors.length]}`} style={{ transform: `translate(${x}px, ${y}px) rotate(${index * 13}deg)` }} />;
-          })}
-        </div>
+    <div className="real-pot cash-pot" aria-label={`Pot ${pot}`}>
+      <div className="cash-stack" aria-hidden="true">
+        <span className="cash-note note-a">$</span>
+        <span className="cash-note note-b">$</span>
+        <span className="cash-band" />
       </div>
       <b>Pot: {pot}</b>
     </div>
@@ -230,15 +223,21 @@ function roleTextForPlayer(room, playerIndex, n) {
 function TableSeatCards({ player, isMe, revealAllowed }) {
   const count = Math.max(player.cardCount || 0, player.cards?.length || 0);
   if (!count) return null;
+  const backStatus = player.folded || String(player.status || '').toLowerCase().includes('drop')
+    ? 'dropped'
+    : player.sawCards
+      ? 'open'
+      : 'blind';
+
   return (
-    <div className={`table-seat-cards ${isMe ? 'my-table-cards' : 'opponent-table-cards'}`}>
+    <div className={`table-seat-cards ${isMe ? 'my-table-cards' : 'opponent-table-cards'} player-cards-${backStatus}`}>
       {Array.from({ length: count }).map((_, i) => {
         const card = player.cards?.[i];
         const hidden = !revealAllowed || player.cardsHidden || !card;
         const rotation = (i - (count - 1) / 2) * (isMe ? 5 : 3);
         return (
           <div key={i} className="table-card-wrap" style={{ transform: `rotate(${rotation}deg)` }}>
-            <PlayingCard card={card} hidden={hidden} />
+            <PlayingCard card={card} hidden={hidden} backStatus={backStatus} />
           </div>
         );
       })}
@@ -277,6 +276,41 @@ function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId
 }
 
 
+
+function TimedCenterPopup({ announcement, className = "one-card-popup" }) {
+  const [visibleId, setVisibleId] = useState(null);
+  useEffect(() => {
+    if (!announcement?.id) return;
+    setVisibleId(announcement.id);
+    const timer = setTimeout(() => setVisibleId(null), 2600);
+    return () => clearTimeout(timer);
+  }, [announcement?.id]);
+
+  if (!announcement || visibleId !== announcement.id) return null;
+  return (
+    <div className={className}>
+      <strong>{announcement.text}</strong>
+    </div>
+  );
+}
+
+function CashAwardAnimation({ award, players, myIndex }) {
+  const [visibleId, setVisibleId] = useState(null);
+  useEffect(() => {
+    if (!award?.id) return;
+    setVisibleId(award.id);
+    const timer = setTimeout(() => setVisibleId(null), 1600);
+    return () => clearTimeout(timer);
+  }, [award?.id]);
+
+  if (!award || visibleId !== award.id) return null;
+  const winnerIndex = players.findIndex((p) => p.id === award.winnerId);
+  const n = players.length || 1;
+  const relativeIndex = winnerIndex >= 0 ? (winnerIndex - myIndex + n) % n : 0;
+  const pos = getPerspectivePosition(relativeIndex, n);
+  return <div className="cash-award-fly" style={{ '--cash-to-x': `${pos.x - 50}%`, '--cash-to-y': `${pos.y - 50}%` }}>💵</div>;
+}
+
 function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCardMode, setOneCardMode }) {
   if (!['placeCut', 'chooseSeat', 'chooseOneCardMode', 'betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status)) return null;
   const n = room.players.length;
@@ -304,7 +338,11 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
       <div className="seats polygon-seats big-table-stage perspective-stage" style={{ '--player-count': n }}>
         <div className="table-center polygon-table real-table perspective-felt-table">
           {['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
+          <TimedCenterPopup announcement={room.oneCardModeAnnouncement} />
+          <TimedCenterPopup announcement={room.wellCutAnnouncement} className="one-card-popup well-cut-popup" />
+          <TimedCenterPopup announcement={room.winnerAnnouncement} className="one-card-popup winner-pop-popup" />
         </div>
+        <CashAwardAnimation award={room.cashAward} players={room.players} myIndex={myIndex} />
 
         <PlaceCutDeck room={room} playerId={playerId} actions={actions} />
         <PlaceCutRanking room={room} playerId={playerId} actions={actions} />
@@ -345,7 +383,7 @@ export default function App() {
   const [joinName, setJoinName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [startingCoins, setStartingCoins] = useState(100);
-  const [cyclesPerRound, setCyclesPerRound] = useState(6);
+  const [cyclesPerRound, setCyclesPerRound] = useState(20);
   const [cutPercent, setCutPercent] = useState(50);
   const [oneCardMode, setOneCardMode] = useState('highest');
   const danka = useDankaRoom();
@@ -361,7 +399,7 @@ export default function App() {
       <main className="page home entry-home">
         <section className="hero entry-hero">
           <h1>DANKA</h1>
-          <p>Prototype 5.11 — side fix and single-card mode confirmation.</p>
+          <p>Play Danka online with your friends.</p>
           <p className={connected ? 'ok' : 'bad'}>{connected ? 'Backend connected' : 'Backend not connected'}</p>
         </section>
 
