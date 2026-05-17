@@ -1535,3 +1535,20 @@ button.danger { background: #fb7185; color: #fff1f2; border-color: #fecdd3; }
 
 .player-cards-open .table-card-wrap { filter: drop-shadow(0 0 8px rgba(59,130,246,.45)); }
 .player-cards-dropped .table-card-wrap { filter: grayscale(.15) brightness(.78) drop-shadow(0 0 6px rgba(0,0,0,.55)); }
+
+
+/* Prototype 5.19 — fixed Drop position */
+.table-action-dock .fixed-drop-action {
+  position: absolute !important;
+  right: 6px !important;
+  bottom: 0 !important;
+  min-width: 96px !important;
+  z-index: 60 !important;
+}
+.table-action-dock .action-groups {
+  padding-right: 120px !important;
+}
+@media (max-width: 760px) {
+  .table-action-dock .fixed-drop-action { right: 2px !important; min-width: 82px !important; }
+  .table-action-dock .action-groups { padding-right: 92px !important; }
+}

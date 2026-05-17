@@ -4,13 +4,14 @@ export default function ActionButtons({ room, playerId, actions }) {
   const p = getPermissions(room, playerId);
   const leftButtons = [];
   const rightButtons = [];
+  let fixedDropButton = null;
 
   if (p.canSeeCards) leftButtons.push(<button key="see" onClick={actions.seeCards}>See Cards</button>);
   if (p.canBlindBet) leftButtons.push(<button key="blind" onClick={actions.blindBet}>Blind Bet</button>);
   if (p.canCut) leftButtons.push(<button key="cut" onClick={actions.cut}>Cut</button>);
 
   if (p.canOpenBet) rightButtons.push(<button key="open" onClick={actions.openBet}>Open Bet</button>);
-  if (p.canDrop) rightButtons.push(<button key="drop" className="drop-action" onClick={actions.drop}>Drop</button>);
+  if (p.canDrop) fixedDropButton = <button key="drop" className="drop-action fixed-drop-action" onClick={actions.drop}>Drop</button>;
   if (p.canSide) rightButtons.push(<button key="side" onClick={actions.askSide}>Ask Side</button>);
   if (p.canShow) rightButtons.push(<button key="show" onClick={actions.askShow}>Show</button>);
   if (p.canStartNextRound) rightButtons.push(<button key="dealnext" onClick={actions.startNextRound}>Deal Next Cycle</button>);
@@ -22,7 +23,7 @@ export default function ActionButtons({ room, playerId, actions }) {
   if (p.canContinueSamePlayers) rightButtons.push(<button key="continue" onClick={actions.continueSamePlayers}>Continue Same Players</button>);
   if (p.canLeaveAtCycleBreak) rightButtons.push(<button key="leave" onClick={actions.leaveGameAtCycleBreak}>Leave at Round Break</button>);
 
-  const hasActions = leftButtons.length > 0 || rightButtons.length > 0;
+  const hasActions = leftButtons.length > 0 || rightButtons.length > 0 || !!fixedDropButton;
   const shouldShowCutPanel = false;
 
   if (!shouldShowCutPanel && !hasActions) return null;
@@ -67,6 +68,7 @@ export default function ActionButtons({ room, playerId, actions }) {
           {rightButtons.length > 0 && <div className="action-group action-group-right">{rightButtons}</div>}
         </div>
       )}
+      {fixedDropButton}
     </div>
   );
 }
