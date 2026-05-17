@@ -23,10 +23,12 @@ function evaluateThreeCardHand(cards) {
   const sameRank = values[0] === values[1] && values[1] === values[2];
   const sequence = isSequence(sorted);
   const sameSuit = sorted.every((c) => c.suit === sorted[0].suit);
+  const distinctSuitCount = new Set(sorted.map((c) => c.suit)).size;
+  const isTrueTick = sequence && distinctSuitCount === 3;
   const sameColor = sorted.every((c) => c.color === sorted[0].color);
   if (sameRank) return { level: 6, name: "Danka", score: [6, values[0], Math.max(...suitRanks)], selectedCards: sorted };
   if (sequence && sameSuit) return { level: 5, name: "Flash", score: [5, values[0], Math.max(...suitRanks)], selectedCards: sorted };
-  if (sequence) return { level: 4, name: "Tick", score: [4, values[0], ...suitRanks], selectedCards: sorted };
+  if (isTrueTick) return { level: 4, name: "Tick", score: [4, values[0], ...suitRanks], selectedCards: sorted };
   if (sameSuit) return { level: 3, name: "Color", score: [3, ...values, ...suitRanks], selectedCards: sorted };
   const counts = values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {});
   const pairValue = Number(Object.keys(counts).find((value) => counts[value] === 2));

@@ -5,16 +5,10 @@ const { completeRound, startNextRoundFromRoundOver, prepareFreshCycle, dealCards
 const { calculateSettlement } = require("../gameLogic/settlement");
 const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket, attachSocketToPlayer, findPreviousActiveIndex, findDealerLeftIndex } = require("../rooms/roomHelpers");
 
-function compareSideCards(requesterCards, opponentCards) {
-  const a = [...(requesterCards || [])].sort((x, y) => y.value - x.value);
-  const b = [...(opponentCards || [])].sort((x, y) => y.value - x.value);
-  const max = Math.max(a.length, b.length);
-  for (let i = 0; i < max; i++) {
-    const av = a[i]?.value || 0;
-    const bv = b[i]?.value || 0;
-    if (av !== bv) return av - bv;
-  }
-  return 0;
+function compareSideHands(requesterCards, opponentCards, roundType, oneCardMode) {
+  const requesterHand = evaluateHand(requesterCards, roundType, oneCardMode);
+  const opponentHand = evaluateHand(opponentCards, roundType, oneCardMode);
+  return compareScores(requesterHand, opponentHand);
 }
 
 function registerAdvancedEvents(io, socket) {
@@ -40,9 +34,9 @@ function registerAdvancedEvents(io, socket) {
       participantIds: [requester.id, opponent.id],
       message: `${requester.name} asked Side with ${opponent.name}. Only these two players can view each other's cards for this Side comparison.`,
     };
-    const comparison = compareSideCards(requester.cards, opponent.cards);
-    // Side uses card-by-card rank comparison: highest card first, then second, then third.
-    // If all card ranks are tied, the requester loses/drops.
+    const comparison = compareSideHands(requester.cards, opponent.cards, room.roundType, room.oneCardMode);
+    // Side compares full hand strength first: Danka > Flash > Tick > Color > Pair > High Card.
+    // Hand tie-breakers are handled by the normal hand score. If fully tied, the requester loses/drops.
     const winner = comparison > 0 ? requester : opponent;
     const loser = comparison > 0 ? opponent : requester;
     loser.folded = true;

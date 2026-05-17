@@ -27,6 +27,15 @@ function hasLaterActiveBlindPlayer(room, fromIndex) {
   return false;
 }
 
+function cutIsRequiredForCurrentPlayer(room) {
+  const player = getCurrentPlayer(room);
+  if (!player || player.folded || player.sawCards) return false;
+  if ((player.cutLockTurns || 0) > 0) return false;
+  if (player.coins < 1) return false;
+  const previousPlayer = room.players[previousActiveIndex(room, room.turnIndex)];
+  return !!previousPlayer?.sawCards && hasLaterActiveBlindPlayer(room, room.turnIndex);
+}
+
 function registerBettingEvents(io, socket) {
   socket.on("seeCards", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
@@ -36,6 +45,7 @@ function registerBettingEvents(io, socket) {
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
     const player = getCurrentPlayer(room);
+    if (cutIsRequiredForCurrentPlayer(room)) return callback?.({ success: false, error: "Cut is required now. You cannot See Cards on this turn." });
     if (player.sawCards) return callback?.({ success: false, error: "Already seen cards." });
     player.sawCards = true;
     player.cutLockTurns = 0;
@@ -54,12 +64,25 @@ function registerBettingEvents(io, socket) {
     clearSideReveal(room);
     const player = getCurrentPlayer(room);
     if (player.sawCards) return callback?.({ success: false, error: "Blind Bet not allowed after seeing cards." });
+    if (cutIsRequiredForCurrentPlayer(room)) return callback?.({ success: false, error: "Cut is required now. Blind Bet is not available on this turn." });
     if (player.coins < 1) return callback?.({ success: false, error: "Not enough coins." });
     player.coins -= 1;
     room.pot += 1;
-    if (player.cutLockTurns > 0) player.cutLockTurns -= 1;
-    player.status = player.cutLockTurns > 0 ? `Cut Blind (${player.cutLockTurns} turns left)` : "Blind";
-    room.lastActionMessage = `${player.name} placed Blind Bet: 1 coin.${player.cutLockTurns > 0 ? ` Cut lock remaining: ${player.cutLockTurns}.` : ""}`;
+    let cutMessage = "";
+    if (player.cutLockTurns > 0) {
+      player.cutLockTurns -= 1;
+      if (player.cutLockTurns === 0) {
+        player.sawCards = true;
+        player.status = "Open";
+        cutMessage = " Cut protection ended, so cards are now open.";
+      } else {
+        player.status = `Cut Blind (${player.cutLockTurns} turns left)`;
+        cutMessage = ` Cut lock remaining: ${player.cutLockTurns}.`;
+      }
+    } else {
+      player.status = "Blind";
+    }
+    room.lastActionMessage = `${player.name} placed Blind Bet: 1 coin.${cutMessage}`;
     room.turnIndex = nextActiveIndex(room, room.turnIndex);
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
