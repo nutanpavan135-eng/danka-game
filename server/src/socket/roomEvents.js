@@ -1,7 +1,7 @@
 const { rooms } = require("../rooms/roomStore");
 const { generateRoomCode, createPlayer, createRoom } = require("../rooms/roomFactory");
 const { getRoomStateForPlayer, broadcastPrivateRoomState } = require("../rooms/roomState");
-const { calculateCycleTarget } = require("../rooms/roomHelpers");
+const { calculateCycleTarget, attachSocketToPlayer } = require("../rooms/roomHelpers");
 const { createDeck, shuffleDeck } = require("../gameLogic/cards");
 const { LIMITS } = require("../../../shared/ruleConstants");
 
@@ -9,7 +9,7 @@ function registerRoomEvents(io, socket) {
   socket.on("createRoom", ({ playerName, startingCoins, cyclesPerRound }, callback) => {
     const safeCoins = Number(startingCoins) > 0 ? Number(startingCoins) : 100;
     const rawCycles = Number(cyclesPerRound);
-    const safeCyclesPerRound = Number.isFinite(rawCycles) && rawCycles > 0 ? Math.max(1, Math.min(Math.floor(rawCycles), 50)) : calculateCycleTarget(2);
+    const safeCyclesPerRound = Number.isFinite(rawCycles) && rawCycles > 0 ? Math.max(1, Math.min(Math.floor(rawCycles), 50)) : 20;
     const roomCode = generateRoomCode();
     const adminPlayer = createPlayer({ socketId: socket.id, name: playerName, isAdmin: true, startingCoins: safeCoins });
     const room = createRoom({ roomCode, adminPlayer, startingCoins: safeCoins, cyclesPerRound: safeCyclesPerRound });
@@ -21,7 +21,7 @@ function registerRoomEvents(io, socket) {
 
   socket.on("joinRoom", ({ roomCode, playerName }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     if (room.status !== "lobby") return callback?.({ success: false, error: "Game has already started." });
     if (room.players.length >= LIMITS.MAX_PLAYERS) return callback?.({ success: false, error: "Room is full." });
     if (room.players.some((p) => p.name.toLowerCase() === String(playerName || "").trim().toLowerCase())) {
@@ -35,9 +35,10 @@ function registerRoomEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("startGame", ({ roomCode }, callback) => {
+  socket.on("startGame", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can start." });
     if (room.players.length < LIMITS.MIN_PLAYERS) return callback?.({ success: false, error: "At least 2 players required." });
     room.status = "placeCut";
@@ -53,9 +54,10 @@ function registerRoomEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("leaveRoom", ({ roomCode }, callback) => {
+  socket.on("leaveRoom", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     const idx = room.players.findIndex((p) => p.socketId === socket.id);
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
     const [leaving] = room.players.splice(idx, 1);

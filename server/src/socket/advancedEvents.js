@@ -3,7 +3,7 @@ const { broadcastPrivateRoomState } = require("../rooms/roomState");
 const { evaluateHand, compareScores } = require("../gameLogic/handEvaluator");
 const { completeRound, startNextRoundFromRoundOver, prepareFreshCycle, dealCardsDirectly } = require("../gameLogic/roundFlow");
 const { calculateSettlement } = require("../gameLogic/settlement");
-const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket, findPreviousActiveIndex, findDealerLeftIndex } = require("../rooms/roomHelpers");
+const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket, attachSocketToPlayer, findPreviousActiveIndex, findDealerLeftIndex } = require("../rooms/roomHelpers");
 
 function compareSideCards(requesterCards, opponentCards) {
   const a = [...(requesterCards || [])].sort((x, y) => y.value - x.value);
@@ -18,9 +18,10 @@ function compareSideCards(requesterCards, opponentCards) {
 }
 
 function registerAdvancedEvents(io, socket) {
-  socket.on("askSide", ({ roomCode }, callback) => {
+  socket.on("askSide", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Side only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     const active = getActivePlayers(room);
@@ -59,9 +60,10 @@ function registerAdvancedEvents(io, socket) {
   });
 
 
-  socket.on("chooseOneCardMode", ({ roomCode, mode }, callback) => {
+  socket.on("chooseOneCardMode", ({ roomCode, mode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "chooseOneCardMode") return callback?.({ success: false, error: "Single-card mode choice is not available now." });
     const chooserIndex = findDealerLeftIndex(room);
     const chooser = room.players[chooserIndex];
@@ -72,14 +74,20 @@ function registerAdvancedEvents(io, socket) {
     room.oneCardMode = selectedMode;
     room.roundType = "one";
     const label = selectedMode === "lowest" ? "Lowest Card Wins" : "Highest Card Wins";
+    room.oneCardModeAnnouncement = {
+      id: Date.now(),
+      text: label,
+      mode: selectedMode,
+    };
     dealCardsDirectly(room, `${chooser.name} confirmed ${label} for this single-card cycle.`);
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("startNextRound", ({ roomCode }, callback) => {
+  socket.on("startNextRound", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "roundOver") return callback?.({ success: false, error: "Next round only after round over." });
     const dealer = room.players[room.dealerIndex];
     if (dealer?.socketId !== socket.id) return callback?.({ success: false, error: `Only ${dealer?.name || "the dealer"} can deal the next cycle.` });
@@ -88,9 +96,10 @@ function registerAdvancedEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("requestPlaceCut", ({ roomCode }, callback) => {
+  socket.on("requestPlaceCut", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Place Cut only at cycle break." });
     const requester = room.players.find((p) => p.socketId === socket.id);
     if (!requester) return callback?.({ success: false, error: "Player not found." });
@@ -99,9 +108,10 @@ function registerAdvancedEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("continueSamePlayers", ({ roomCode }, callback) => {
+  socket.on("continueSamePlayers", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Continue only at cycle break." });
     if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can continue." });
     prepareFreshCycle(room, "Admin continued with same players. Fresh cycle started.");
@@ -109,9 +119,10 @@ function registerAdvancedEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("leaveGameAtCycleBreak", ({ roomCode }, callback) => {
+  socket.on("leaveGameAtCycleBreak", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Players can leave only at cycle break." });
     const idx = room.players.findIndex((p) => p.socketId === socket.id);
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
@@ -130,9 +141,10 @@ function registerAdvancedEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("endSession", ({ roomCode }, callback) => {
+  socket.on("endSession", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can end session." });
     const safeEndStatuses = ["lobby", "cycleBreak", "roundOver"];
     if (!safeEndStatuses.includes(room.status)) {

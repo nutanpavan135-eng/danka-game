@@ -75,6 +75,8 @@ function dealCardsDirectly(room, message = "Dealer deals automatically.") {
   room.winnerHand = null;
   room.sideReveal = null;
   room.revealed = false;
+  room.winnerAnnouncement = null;
+  room.cashAward = null;
 
   const n = room.players.length;
   const dealer = room.players[room.dealerIndex] || room.players[0];
@@ -110,9 +112,10 @@ function dealCardsDirectly(room, message = "Dealer deals automatically.") {
   const oneCardNotice = room.roundType === "one" ? ` Single-card rule: ${room.oneCardMode === "lowest" ? "Lowest Card Wins" : "Highest Card Wins"}.` : "";
   if (specialCanStart) {
     room.specialQueue = ["four", "three", "two", "one"];
-    room.lastActionMessage = `${message} Perfect Cut triggered during system dealing. The next four cycles will be special scenario games.${oneCardNotice}`;
+    room.wellCutAnnouncement = { id: Date.now(), text: "Well Cut" };
+    room.lastActionMessage = `${message} Well Cut. The next four cycles will be special scenario games.${oneCardNotice}`;
   } else if (perfectCutTriggered && room.specialQueue.length > 0) {
-    room.lastActionMessage = `${message} Perfect Cut triggered during special games and was ignored.${oneCardNotice}`;
+    room.lastActionMessage = `${message}${oneCardNotice}`;
   } else {
     room.lastActionMessage = `${message} ${dealer?.name || "Dealer"} deals automatically.${oneCardNotice} ${room.players[room.turnIndex]?.name || "First player"} starts betting.`;
   }
@@ -133,6 +136,8 @@ function completeRound(room, winner, message) {
   room.winnerId = winner.id;
   room.winnerHand = winningHand;
   room.sideReveal = null;
+  room.winnerAnnouncement = { id: Date.now(), winnerId: winner.id, text: `${winner.name} won with ${winningHand.name}` };
+  room.cashAward = { id: Date.now() + 1, winnerId: winner.id };
   room.lastCycleReveal = {
     winnerId: winner.id,
     winnerName: winner.name,
@@ -148,7 +153,9 @@ function completeRound(room, winner, message) {
 
   const handMessage = `${winner.name} wins with ${winningHand.name}${handCardsText(winningHand) ? ` (${handCardsText(winningHand)})` : ""}.`;
 
-  if (room.completedRounds >= room.cycleTarget) {
+  const specialMustContinue = room.specialQueue.length > 0 || room.roundType === "four" || room.roundType === "two";
+
+  if (room.completedRounds >= room.cycleTarget && !specialMustContinue) {
     room.status = "cycleBreak";
     room.lastActionMessage = `${message} ${handMessage}${dankaBonusMessage} Round break: Place Cut is now available.`;
   } else {
@@ -167,6 +174,9 @@ function startNextRoundFromRoundOver(room, messagePrefix = "") {
   room.winnerId = null;
   room.winnerHand = null;
   room.revealed = false;
+  room.wellCutAnnouncement = null;
+  room.winnerAnnouncement = null;
+  room.cashAward = null;
   room.placeCutCards = [];
   room.placeCutPicks = [];
   room.placeCutOrder = [];
@@ -190,6 +200,9 @@ function prepareFreshCycle(room, message = "Fresh round started.") {
   room.winnerId = null;
   room.winnerHand = null;
   room.revealed = false;
+  room.wellCutAnnouncement = null;
+  room.winnerAnnouncement = null;
+  room.cashAward = null;
   room.placeCutCards = [];
   room.players = room.players.map((p) => ({ ...p, startCoins: p.coins, cards: [], sawCards: false, folded: false, status: "Waiting to Pick", seat: "Unassigned", cutLockTurns: 0 }));
   room.placeCutDeck = shuffleDeck(createDeck());

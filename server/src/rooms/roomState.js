@@ -1,3 +1,4 @@
+const { saveRooms } = require("./roomStore");
 function getRoomStateForPlayer(room, receivingPlayerId) {
   const allPlaceCutPicked = room.placeCutPicks?.length === room.players.length && room.players.length > 0;
   const placeCutPicks = (room.placeCutPicks || []).map((pick) => ({
@@ -50,6 +51,10 @@ function getRoomStateForPlayer(room, receivingPlayerId) {
     winnerHand: room.winnerHand || null,
     lastCycleReveal: room.lastCycleReveal || null,
     sideReveal: room.sideReveal || null,
+    oneCardModeAnnouncement: room.oneCardModeAnnouncement || null,
+    wellCutAnnouncement: room.wellCutAnnouncement || null,
+    winnerAnnouncement: room.winnerAnnouncement || null,
+    cashAward: room.cashAward || null,
     settlement: room.settlement || null,
     lastActionMessage: room.lastActionMessage,
     placeCut: {
@@ -65,6 +70,7 @@ function getRoomStateForPlayer(room, receivingPlayerId) {
 }
 
 function broadcastPrivateRoomState(io, room) {
+  saveRooms();
   for (const player of room.players) {
     io.to(player.socketId).emit("roomUpdated", getRoomStateForPlayer(room, player.id));
   }

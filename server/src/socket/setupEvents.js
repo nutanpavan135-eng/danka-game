@@ -2,6 +2,7 @@ const { rooms } = require("../rooms/roomStore");
 const { broadcastPrivateRoomState } = require("../rooms/roomState");
 const { createDeck, shuffleDeck, cardsPerPlayer, compareCardsForPlaceCut } = require("../gameLogic/cards");
 const { dealCardsDirectly } = require("../gameLogic/roundFlow");
+const { attachSocketToPlayer } = require("../rooms/roomHelpers");
 
 function buildSeatsFromChoice(room, chosenSeatIndex) {
   const order = room.placeCutOrder || [];
@@ -20,9 +21,10 @@ function buildSeatsFromChoice(room, chosenSeatIndex) {
 }
 
 function registerSetupEvents(io, socket) {
-  socket.on("pickPlaceCutCard", ({ roomCode, deckIndex }, callback) => {
+  socket.on("pickPlaceCutCard", ({ roomCode, deckIndex, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "placeCut") return callback?.({ success: false, error: "Place Cut picking is not available now." });
 
     const player = room.players.find((p) => p.socketId === socket.id);
@@ -56,9 +58,10 @@ function registerSetupEvents(io, socket) {
   });
 
   // Backward-compatible admin shortcut for testing only: auto-pick for all players.
-  socket.on("runPlaceCut", ({ roomCode }, callback) => {
+  socket.on("runPlaceCut", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "placeCut") return callback?.({ success: false, error: "Place Cut is not available now." });
     if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can auto-run Place Cut." });
 
@@ -74,9 +77,10 @@ function registerSetupEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("chooseSeat", ({ roomCode, seatIndex }, callback) => {
+  socket.on("chooseSeat", ({ roomCode, seatIndex, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "chooseSeat") return callback?.({ success: false, error: "Seat choice is not available now." });
 
     const highestPick = room.placeCutOrder?.[0];
@@ -116,7 +120,7 @@ function registerSetupEvents(io, socket) {
 
   // Pre-game cutter flow has been removed from Danka online.
   // The system shuffles/deals fairly, so after Place Cut seat selection the dealer deals directly.
-  socket.on("cutDeckAndDeal", ({ roomCode }, callback) => {
+  socket.on("cutDeckAndDeal", ({ roomCode, playerId }, callback) => {
     return callback?.({ success: false, error: "Manual deck cut has been removed. Dealer now deals directly after Place Cut." });
   });
 }

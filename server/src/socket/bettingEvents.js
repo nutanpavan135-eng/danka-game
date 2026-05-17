@@ -2,7 +2,7 @@ const { rooms } = require("../rooms/roomStore");
 const { broadcastPrivateRoomState } = require("../rooms/roomState");
 const { evaluateHand, compareScores } = require("../gameLogic/handEvaluator");
 const { completeRound } = require("../gameLogic/roundFlow");
-const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket } = require("../rooms/roomHelpers");
+const { getCurrentPlayer, getActivePlayers, nextActiveIndex, isCurrentPlayersSocket, attachSocketToPlayer } = require("../rooms/roomHelpers");
 
 function previousActiveIndex(room, fromIndex) {
   for (let step = 1; step <= room.players.length; step++) {
@@ -28,9 +28,10 @@ function hasLaterActiveBlindPlayer(room, fromIndex) {
 }
 
 function registerBettingEvents(io, socket) {
-  socket.on("seeCards", ({ roomCode }, callback) => {
+  socket.on("seeCards", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Cards can be seen only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
@@ -44,18 +45,15 @@ function registerBettingEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("blindBet", ({ roomCode }, callback) => {
+  socket.on("blindBet", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Blind Bet only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
     const player = getCurrentPlayer(room);
     if (player.sawCards) return callback?.({ success: false, error: "Blind Bet not allowed after seeing cards." });
-    const prev = room.players[previousActiveIndex(room, room.turnIndex)];
-    if (prev?.sawCards && !(player.cutLockTurns > 0)) {
-      return callback?.({ success: false, error: "Previous active player is Open. Use Cut if you want to continue Blind." });
-    }
     if (player.coins < 1) return callback?.({ success: false, error: "Not enough coins." });
     player.coins -= 1;
     room.pot += 1;
@@ -67,9 +65,10 @@ function registerBettingEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("cut", ({ roomCode }, callback) => {
+  socket.on("cut", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Cut is allowed only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     const player = getCurrentPlayer(room);
@@ -97,9 +96,10 @@ function registerBettingEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("openBet", ({ roomCode }, callback) => {
+  socket.on("openBet", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Open Bet only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
@@ -115,9 +115,10 @@ function registerBettingEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("drop", ({ roomCode }, callback) => {
+  socket.on("drop", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Drop only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
@@ -135,9 +136,10 @@ function registerBettingEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
-  socket.on("askShow", ({ roomCode }, callback) => {
+  socket.on("askShow", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found." });
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "betting") return callback?.({ success: false, error: "Show only during betting." });
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
