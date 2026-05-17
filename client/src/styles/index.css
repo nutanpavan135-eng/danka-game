@@ -1552,3 +1552,14 @@ button.danger { background: #fb7185; color: #fff1f2; border-color: #fecdd3; }
   .table-action-dock .fixed-drop-action { right: 2px !important; min-width: 82px !important; }
   .table-action-dock .action-groups { padding-right: 92px !important; }
 }
+
+
+/* Prototype 5.20 — Drop button clickability fix */
+.table-action-dock .actions .fixed-drop-action,
+.table-action-dock .fixed-drop-action {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+  z-index: 999 !important;
+}
