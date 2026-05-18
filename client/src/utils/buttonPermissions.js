@@ -38,7 +38,7 @@ export function getPermissions(room, playerId) {
   const previousIsOpen = !!prevActive?.sawCards;
   const cutLocked = (me?.cutLockTurns || 0) > 0;
   const laterBlindExists = hasLaterActiveBlindPlayer(room, room.turnIndex);
-  const cutRequired = room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1 && previousIsOpen && !cutLocked && laterBlindExists;
+  const cutRequired = room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && previousIsOpen && !cutLocked && laterBlindExists;
 
   return {
     isAdmin,
@@ -51,12 +51,12 @@ export function getPermissions(room, playerId) {
     canChooseSeat: room.status === 'chooseSeat' && isHighestPicker,
     canCutDeck: false,
     canSeeCards: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && !cutRequired,
-    canBlindBet: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && me.coins >= 1 && !cutRequired,
+    canBlindBet: room.status === 'betting' && isMyTurn && me && !me.sawCards && !me.folded && !cutRequired,
     canCut: cutRequired,
-    canOpenBet: room.status === 'betting' && isMyTurn && me && me.sawCards && me.coins >= 2,
+    canOpenBet: room.status === 'betting' && isMyTurn && me && me.sawCards,
     canDrop: room.status === 'betting' && isMyTurn && me && !me.folded,
-    canShow: room.status === 'betting' && isMyTurn && active.length === 2 && me?.coins >= 2,
-    canSide: room.status === 'betting' && isMyTurn && active.length > 2 && allOpen && me?.sawCards && me?.coins >= 2,
+    canShow: room.status === 'betting' && isMyTurn && active.length === 2,
+    canSide: room.status === 'betting' && isMyTurn && active.length > 2 && allOpen && me?.sawCards,
     canStartNextRound: room.status === 'roundOver' && dealerIsMe,
     canChooseOneCardMode,
     canRequestPlaceCut: room.status === 'cycleBreak',
