@@ -31,7 +31,6 @@ function cutIsRequiredForCurrentPlayer(room) {
   const player = getCurrentPlayer(room);
   if (!player || player.folded || player.sawCards) return false;
   if ((player.cutLockTurns || 0) > 0) return false;
-  if (player.coins < 1) return false;
   const previousPlayer = room.players[previousActiveIndex(room, room.turnIndex)];
   return !!previousPlayer?.sawCards && hasLaterActiveBlindPlayer(room, room.turnIndex);
 }
@@ -65,7 +64,6 @@ function registerBettingEvents(io, socket) {
     const player = getCurrentPlayer(room);
     if (player.sawCards) return callback?.({ success: false, error: "Blind Bet not allowed after seeing cards." });
     if (cutIsRequiredForCurrentPlayer(room)) return callback?.({ success: false, error: "Cut is required now. Blind Bet is not available on this turn." });
-    if (player.coins < 1) return callback?.({ success: false, error: "Not enough coins." });
     player.coins -= 1;
     room.pot += 1;
     let cutMessage = "";
@@ -100,8 +98,6 @@ function registerBettingEvents(io, socket) {
     if (!previousPlayer?.sawCards) return callback?.({ success: false, error: "Cut is available only after the previous active player is Open." });
     if (!hasLaterActiveBlindPlayer(room, room.turnIndex)) return callback?.({ success: false, error: "Cut is available only when at least one later active player is still Blind." });
     if (player.cutLockTurns > 0) return callback?.({ success: false, error: "You already used Cut. Continue Blind or See Cards." });
-    if (player.coins < 1) return callback?.({ success: false, error: "Not enough coins to Cut." });
-
     player.coins -= 1;
     room.pot += 1;
     player.sawCards = false;
@@ -128,7 +124,6 @@ function registerBettingEvents(io, socket) {
     clearSideReveal(room);
     const player = getCurrentPlayer(room);
     if (!player.sawCards) return callback?.({ success: false, error: "You must see cards before Open Bet." });
-    if (player.coins < 2) return callback?.({ success: false, error: "Not enough coins." });
     player.coins -= 2;
     room.pot += 2;
     player.status = "Open";
@@ -169,7 +164,6 @@ function registerBettingEvents(io, socket) {
     const active = getActivePlayers(room);
     if (active.length !== 2) return callback?.({ success: false, error: "Show allowed only when exactly two players remain." });
     const asker = getCurrentPlayer(room);
-    if (asker.coins < 2) return callback?.({ success: false, error: "Not enough coins." });
     asker.coins -= 2;
     asker.sawCards = true;
     asker.status = "Asked Show";

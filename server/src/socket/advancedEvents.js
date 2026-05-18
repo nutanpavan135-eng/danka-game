@@ -23,7 +23,6 @@ function registerAdvancedEvents(io, socket) {
     if (!active.every((p) => p.sawCards)) return callback?.({ success: false, error: "Side only after all active players are Open." });
     const requester = getCurrentPlayer(room);
     if (!requester.sawCards) return callback?.({ success: false, error: "You must be Open before Side." });
-    if (requester.coins < 2) return callback?.({ success: false, error: "Not enough coins." });
     const opponentIndex = findPreviousActiveIndex(room, room.turnIndex);
     const opponent = room.players[opponentIndex];
     requester.coins -= 2;

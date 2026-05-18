@@ -66,7 +66,11 @@ function evaluateOneCardHand(cards, lowestWins = false) {
   if (!cards || cards.length !== 1) return { level: 0, name: "No hand", score: [0], selectedCards: [] };
   const card = cards[0];
   const rankScore = lowestWins ? 15 - card.value : card.value;
-  return { level: 1, name: lowestWins ? "Lowest Card" : "Highest Card", score: [1, rankScore, card.suitRank], selectedCards: cards };
+  // In Lowest Card mode, ties on rank must also use the lowest suit/symbol.
+  // Suit rank order is Spade=4, Heart/Love=3, Diamond/Promise=2, Club=1.
+  // compareScores rewards the larger score, so convert lower suitRank into a higher score.
+  const suitScore = lowestWins ? 5 - card.suitRank : card.suitRank;
+  return { level: 1, name: lowestWins ? "Lowest Card" : "Highest Card", score: [1, rankScore, suitScore], selectedCards: cards };
 }
 function evaluateHand(cards, roundType = "three", oneCardMode = "highest") {
   if (roundType === "four") {
