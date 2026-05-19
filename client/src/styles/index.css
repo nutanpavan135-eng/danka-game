@@ -1563,3 +1563,499 @@ button.danger { background: #fb7185; color: #fff1f2; border-color: #fecdd3; }
   touch-action: manipulation !important;
   z-index: 999 !important;
 }
+
+/* Prototype 5.22 — Animation & Sound Upgrade */
+.table-card-wrap {
+  transform: rotate(var(--card-rotation, 0deg));
+  transform-origin: 50% 100%;
+  will-change: transform, opacity, filter;
+  animation: dealFromDeck522 .58s cubic-bezier(.18,.9,.28,1.2) both !important;
+}
+.table-card-wrap:nth-child(1) { animation-delay: .04s !important; }
+.table-card-wrap:nth-child(2) { animation-delay: .13s !important; }
+.table-card-wrap:nth-child(3) { animation-delay: .22s !important; }
+.table-card-wrap:nth-child(4) { animation-delay: .31s !important; }
+@keyframes dealFromDeck522 {
+  0% {
+    opacity: 0;
+    transform: translate(calc(50vw - 50%), calc(50vh - 50%)) scale(.18) rotate(-22deg);
+    filter: blur(2px) drop-shadow(0 18px 18px rgba(0,0,0,.42));
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05) rotate(var(--card-rotation, 0deg));
+    filter: blur(0) drop-shadow(0 12px 10px rgba(0,0,0,.35));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(var(--card-rotation, 0deg));
+    filter: blur(0) drop-shadow(0 6px 7px rgba(0,0,0,.22));
+  }
+}
+
+.animated-card.clean-face-card {
+  animation: cardFlipFace522 .42s ease-out both;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+.animated-card.clean-card-back {
+  animation: cardBackSettle522 .34s ease-out both;
+}
+@keyframes cardFlipFace522 {
+  0% { transform: rotateY(88deg) scale(.95); filter: brightness(.85); }
+  55% { transform: rotateY(-8deg) scale(1.05); filter: brightness(1.12); }
+  100% { transform: rotateY(0) scale(1); filter: brightness(1); }
+}
+@keyframes cardBackSettle522 {
+  0% { transform: rotateY(-16deg) scale(.94); }
+  100% { transform: rotateY(0) scale(1); }
+}
+
+.table-card-wrap.is-dropped-card {
+  animation: droppedCardSlide522 .45s ease both !important;
+  filter: grayscale(.35) brightness(.7);
+}
+@keyframes droppedCardSlide522 {
+  0% { opacity: 1; transform: translateY(0) rotate(var(--card-rotation, 0deg)); }
+  100% { opacity: .75; transform: translateY(14px) scale(.96) rotate(var(--card-rotation, 0deg)); }
+}
+
+.real-pot.cash-pot .cash-stack {
+  animation: potBreathe522 1.7s ease-in-out infinite;
+}
+@keyframes potBreathe522 {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.04); }
+}
+.cash-award-fly {
+  animation: cashAwardMove522 1.65s cubic-bezier(.2,.8,.2,1) both !important;
+}
+@keyframes cashAwardMove522 {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.45) rotate(-20deg); }
+  16% { opacity: 1; transform: translate(-50%, -50%) scale(1.22) rotate(8deg); }
+  68% { opacity: 1; transform: translate(calc(-50% + var(--cash-to-x) * .72), calc(-50% + var(--cash-to-y) * .72)) scale(1.06) rotate(-6deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--cash-to-x)), calc(-50% + var(--cash-to-y))) scale(.72) rotate(12deg); }
+}
+
+.winner-pop-popup {
+  animation: winnerPop522 2.8s cubic-bezier(.2,.8,.2,1) both !important;
+}
+.winner-pop-popup::before {
+  box-shadow: 0 0 28px rgba(255,255,255,.75) inset;
+}
+.winner-pop-popup strong::before,
+.winner-pop-popup strong::after {
+  content: "🏆";
+  display: inline-block;
+  margin: 0 10px;
+  animation: trophyBounce522 .7s ease-in-out infinite alternate;
+}
+@keyframes winnerPop522 {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.56) rotate(-3deg); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(1.12) rotate(2deg); }
+  24%, 78% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(.9); }
+}
+@keyframes trophyBounce522 {
+  from { transform: translateY(0) rotate(-5deg); }
+  to { transform: translateY(-5px) rotate(5deg); }
+}
+
+.well-cut-popup {
+  animation: wellCutShock522 2.8s ease both !important;
+  box-shadow:
+    0 26px 70px rgba(0,0,0,.62),
+    0 0 0 9px rgba(16,185,129,.24),
+    0 0 62px rgba(16,185,129,.78) !important;
+}
+.well-cut-popup strong::before,
+.well-cut-popup strong::after {
+  content: "✦";
+  display: inline-block;
+  margin: 0 12px;
+  animation: wellCutSpark522 .55s ease-in-out infinite alternate;
+}
+@keyframes wellCutShock522 {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.5); filter: blur(3px); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); filter: blur(0); }
+  18% { transform: translate(-50%, -50%) scale(.98); }
+  26%, 78% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -58%) scale(.86); }
+}
+@keyframes wellCutSpark522 {
+  from { transform: scale(.8) rotate(0deg); opacity: .68; }
+  to { transform: scale(1.25) rotate(18deg); opacity: 1; }
+}
+
+.perspective-seat.active-player-seat {
+  position: absolute;
+}
+.perspective-seat.active-player-seat::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 24px;
+  border: 2px solid rgba(253,224,71,.9);
+  animation: turnRing522 1s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes turnRing522 {
+  0%, 100% { opacity: .35; transform: scale(.98); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-card-wrap,
+  .animated-card.clean-face-card,
+  .animated-card.clean-card-back,
+  .winner-pop-popup,
+  .well-cut-popup,
+  .cash-award-fly,
+  .real-pot.cash-pot .cash-stack,
+  .perspective-seat.active-player-seat::after {
+    animation: none !important;
+  }
+}
+
+/* Prototype 5.23 — Casino Table Feel Upgrade: real deck dealing + casino chip movement */
+.center-deck-523 {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  width: 78px;
+  height: 108px;
+  transform: translate(-50%, -50%);
+  z-index: 68;
+  pointer-events: none;
+  animation: deckAppear523 var(--deck-duration, 5s) ease both;
+  filter: drop-shadow(0 18px 16px rgba(0,0,0,.42));
+}
+.center-deck-523 span {
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,.16) 0 18%, transparent 19%),
+    repeating-linear-gradient(45deg, rgba(220,38,38,.50) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(220,38,38,.44) 0 2px, transparent 2px 6px),
+    linear-gradient(145deg, #fff7ed, #fee2e2 62%, #fecaca);
+  border: 2px solid #fecaca;
+  transform: translate(calc(var(--i) * 2px), calc(var(--i) * -2px)) rotate(calc((var(--i) - 2) * 1.5deg));
+  box-shadow: 0 8px 13px rgba(0,0,0,.25);
+}
+.center-deck-523::after {
+  content: "D";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: #fff7ed;
+  color: #b91c1c;
+  font-size: 23px;
+  font-weight: 1000;
+  z-index: 5;
+  box-shadow: 0 5px 10px rgba(0,0,0,.24);
+}
+@keyframes deckAppear523 {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.7) rotate(-8deg); }
+  10%, 88% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.70) rotate(4deg); }
+}
+
+.dealing-overlay-523,
+.chip-flight-layer-523 {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  pointer-events: none;
+  overflow: hidden;
+}
+.flying-deal-card-523 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: #b91c1c;
+  font-size: 21px;
+  font-weight: 1000;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,.16) 0 19%, transparent 20%),
+    repeating-linear-gradient(45deg, rgba(220,38,38,.48) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(220,38,38,.42) 0 2px, transparent 2px 6px),
+    linear-gradient(145deg, #fff7ed, #fef2f2 58%, #fee2e2);
+  border: 2px solid #fecaca;
+  box-shadow: 0 16px 20px rgba(0,0,0,.38);
+  transform: translate(-50%, -50%) scale(.35) rotate(-18deg);
+  animation: flyDealCard523 .36s cubic-bezier(.16,.72,.28,1.02) both;
+  animation-delay: var(--deal-delay, 0s);
+}
+@keyframes flyDealCard523 {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.30) rotate(-18deg); filter: blur(2px); }
+  12% { opacity: 1; }
+  70% { opacity: 1; transform: translate(calc(-50% + var(--to-x) * .86), calc(-50% + var(--to-y) * .86)) scale(calc(var(--deal-scale, 1) * 1.06)) rotate(var(--deal-rotate, 0deg)); filter: blur(0); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--to-x)), calc(-50% + var(--to-y))) scale(calc(var(--deal-scale, 1) * .84)) rotate(var(--deal-rotate, 0deg)); }
+}
+
+/* Existing cards now settle cleanly; the overlay above handles the real fly-from-deck movement. */
+.table-card-wrap {
+  animation: cardSettle523 .28s ease-out both !important;
+}
+.table-card-wrap:nth-child(1) { animation-delay: .28s !important; }
+.table-card-wrap:nth-child(2) { animation-delay: .44s !important; }
+.table-card-wrap:nth-child(3) { animation-delay: .60s !important; }
+.table-card-wrap:nth-child(4) { animation-delay: .76s !important; }
+@keyframes cardSettle523 {
+  from { opacity: 0; transform: translateY(-8px) scale(.96) rotate(var(--card-rotation, 0deg)); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(var(--card-rotation, 0deg)); }
+}
+
+.real-pot.casino-pot {
+  position: absolute !important;
+  left: 50% !important;
+  top: 53% !important;
+  transform: translate(-50%, -50%) scale(.96) !important;
+  z-index: 76 !important;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.real-pot.casino-pot::before { content: none !important; }
+.casino-pot-stack {
+  position: relative;
+  width: 138px;
+  height: 72px;
+  filter: drop-shadow(0 16px 13px rgba(0,0,0,.42));
+}
+.pot-casino-chip,
+.flying-chip-523 {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 4px dashed rgba(255,255,255,.9);
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,.16), 0 8px 12px rgba(0,0,0,.34);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 1000;
+  color: #fff7ed;
+  text-shadow: 0 1px 2px rgba(0,0,0,.55);
+}
+.pot-casino-chip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -17px;
+  margin-top: -17px;
+  transform: translate(calc(((var(--i) % 6) - 2.5) * 17px), calc(((var(--i) % 3) - 1) * 9px)) rotate(calc(var(--i) * 15deg));
+  animation: chipStackBreathe523 1.85s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -.08s);
+}
+.chip-tone-0 { background: radial-gradient(circle at center, #fff7ed 0 18%, #ef4444 19% 45%, #7f1d1d 46% 58%, #fee2e2 59% 100%); }
+.chip-tone-1 { background: radial-gradient(circle at center, #eff6ff 0 18%, #3b82f6 19% 45%, #1e3a8a 46% 58%, #dbeafe 59% 100%); }
+.chip-tone-2 { background: radial-gradient(circle at center, #ecfdf5 0 18%, #10b981 19% 45%, #065f46 46% 58%, #d1fae5 59% 100%); }
+.chip-tone-3 { background: radial-gradient(circle at center, #fffbeb 0 18%, #f59e0b 19% 45%, #92400e 46% 58%, #fef3c7 59% 100%); color: #3b1600; }
+@keyframes chipStackBreathe523 {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.16); }
+}
+.casino-pot b {
+  position: relative;
+  z-index: 3;
+  background: rgba(0,0,0,.58);
+  padding: 4px 13px;
+  border-radius: 999px;
+  color: #fff7cc;
+  text-shadow: 0 2px 4px rgba(0,0,0,.55);
+}
+.flying-chip-523 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(calc(-50% + var(--from-x)), calc(-50% + var(--from-y))) scale(.95);
+  animation: chipToPot523 .72s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: var(--chip-delay, 0s);
+}
+@keyframes chipToPot523 {
+  0% { opacity: 0; transform: translate(calc(-50% + var(--from-x)), calc(-50% + var(--from-y))) scale(.55) rotate(-18deg); }
+  15% { opacity: 1; transform: translate(calc(-50% + var(--from-x)), calc(-50% + var(--from-y))) scale(1.05) rotate(5deg); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(360deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.72) rotate(430deg); }
+}
+
+.cash-award-fly {
+  font-size: 0 !important;
+}
+.cash-award-fly::before,
+.cash-award-fly::after {
+  content: "";
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  margin: 0 -4px;
+  border-radius: 999px;
+  border: 4px dashed rgba(255,255,255,.9);
+  background: radial-gradient(circle at center, #fffbeb 0 18%, #f59e0b 19% 45%, #92400e 46% 58%, #fef3c7 59% 100%);
+  box-shadow: inset 0 0 0 5px rgba(255,255,255,.16), 0 8px 12px rgba(0,0,0,.34);
+}
+
+@media (max-width: 780px) {
+  .center-deck-523 { width: 58px; height: 82px; top: 38%; }
+  .flying-deal-card-523 { width: 44px; height: 62px; border-radius: 9px; }
+  .casino-pot-stack { transform: scale(.78); }
+  .real-pot.casino-pot { transform: translate(-50%, -50%) scale(.82) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .center-deck-523,
+  .flying-deal-card-523,
+  .flying-chip-523,
+  .pot-casino-chip,
+  .table-card-wrap {
+    animation: none !important;
+  }
+}
+
+/* Prototype 5.23.2 — table rail, controlled card reveal, and premium controls */
+.perspective-stage {
+  overflow: hidden !important;
+}
+
+/* Keep profile badges on the outside rail, not inside the inner felt. */
+.perspective-seat {
+  z-index: 80 !important;
+}
+.perspective-seat.my-seat {
+  top: 88% !important;
+}
+.perspective-seat:not(.my-seat) {
+  box-shadow: 0 12px 24px rgba(0,0,0,.38), 0 0 14px rgba(16,185,129,.18) !important;
+}
+
+/* Player cards now live on the felt itself, separate from the profile badges. */
+.floating-table-cards {
+  position: absolute !important;
+  left: var(--card-x) !important;
+  top: var(--card-y) !important;
+  transform: translate(-50%, -50%) scale(var(--card-target-scale, 1)) !important;
+  z-index: 62 !important;
+  pointer-events: none !important;
+  filter: drop-shadow(0 14px 14px rgba(0,0,0,.38));
+}
+.floating-table-cards.my-table-cards,
+.floating-table-cards.opponent-table-cards {
+  left: var(--card-x) !important;
+  top: var(--card-y) !important;
+}
+.floating-table-cards .card.premium-card {
+  width: 64px !important;
+  height: 90px !important;
+}
+.floating-table-cards.me-cards .card.premium-card {
+  width: 70px !important;
+  height: 98px !important;
+}
+.floating-table-cards .table-card-wrap {
+  margin-left: -8px !important;
+}
+.floating-table-cards .table-card-wrap:first-child {
+  margin-left: 0 !important;
+}
+
+/* Place Cut spread must stay inside the table surface, not under the profiles. */
+.placecut-table-layer {
+  z-index: 60 !important;
+}
+.placecut-instructions {
+  top: 10px !important;
+  left: 18px !important;
+  right: 18px !important;
+  z-index: 90 !important;
+  padding: 9px 12px !important;
+}
+.deck-spread {
+  top: 50% !important;
+  width: min(74%, 760px) !important;
+  height: 320px !important;
+  gap: 6px 3px !important;
+  z-index: 70 !important;
+}
+.spread-card {
+  width: clamp(27px, 3vw, 43px) !important;
+  height: clamp(40px, 4.4vw, 60px) !important;
+}
+
+/* Deal from deck: ante first, short shuffle moment, then one-by-one card flight. */
+.center-deck-523 {
+  top: 47% !important;
+  animation: deckShuffle523 var(--deck-duration, 5s) ease both !important;
+}
+.center-deck-523 span {
+  animation: deckCardShuffle523 .9s ease-in-out both;
+  animation-delay: calc(var(--i) * .055s);
+}
+@keyframes deckShuffle523 {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.72) rotate(-9deg); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(-3deg); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(1.02) rotate(3deg); }
+  32%, 88% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.74) rotate(4deg); }
+}
+@keyframes deckCardShuffle523 {
+  0%, 100% { transform: translate(calc(var(--i) * 2px), calc(var(--i) * -2px)) rotate(calc((var(--i) - 2) * 1.5deg)); }
+  45% { transform: translate(calc(var(--i) * 2px + 10px), calc(var(--i) * -2px - 5px)) rotate(calc((var(--i) - 2) * 5deg)); }
+}
+.flying-deal-card-523 {
+  animation-duration: .48s !important;
+}
+.table-card-wrap:nth-child(1) { animation-delay: .02s !important; }
+.table-card-wrap:nth-child(2) { animation-delay: .02s !important; }
+.table-card-wrap:nth-child(3) { animation-delay: .02s !important; }
+.table-card-wrap:nth-child(4) { animation-delay: .02s !important; }
+
+/* Chip movement and pot should be centered on the table felt. */
+.real-pot.casino-pot {
+  top: 54% !important;
+}
+.flying-chip-523 {
+  animation-duration: .82s !important;
+}
+
+/* Premium top controls: Start Game / End Session / Start New Game. */
+.top-right-controls button {
+  min-height: 42px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(254,243,199,.72) !important;
+  background: linear-gradient(180deg, #fde68a, #f59e0b 55%, #92400e) !important;
+  color: #1f1300 !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.45) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.32) !important;
+  letter-spacing: .2px;
+}
+.top-right-controls button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06) saturate(1.08);
+}
+.top-right-controls button.danger {
+  background: linear-gradient(180deg, #fecdd3, #f43f5e 58%, #881337) !important;
+  color: #fff7f7 !important;
+  border-color: rgba(254,205,211,.75) !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35) !important;
+}
+
+@media (max-width: 780px) {
+  .deck-spread { width: 88% !important; height: 280px !important; }
+  .floating-table-cards .card.premium-card { width: 50px !important; height: 70px !important; }
+  .floating-table-cards.me-cards .card.premium-card { width: 58px !important; height: 82px !important; }
+  .perspective-seat.my-seat { top: 90% !important; }
+}
