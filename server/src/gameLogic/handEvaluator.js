@@ -1,9 +1,34 @@
 function cardSortDesc(cards) {
   return [...cards].sort((a, b) => b.value - a.value || b.suitRank - a.suitRank);
 }
-function isSequence(cards) {
+function getSequenceInfo(cards) {
   const values = cardSortDesc(cards).map((c) => c.value);
-  return values[0] - 1 === values[1] && values[1] - 1 === values[2];
+
+  // Normal sequence: Q-K-A, J-Q-K, 2-3-4, etc.
+  if (values[0] - 1 === values[1] && values[1] - 1 === values[2]) {
+    return { isSequence: true, highValue: values[0] };
+  }
+
+  // Ace-low sequence: A-2-3 is valid.
+  // K-A-2 is NOT valid because Ace cannot sit in the middle of a sequence.
+  if (values[0] === 14 && values[1] === 3 && values[2] === 2) {
+    return { isSequence: true, highValue: 3 };
+  }
+
+  return { isSequence: false, highValue: 0 };
+}
+
+function isTwoCardSequence(a, b) {
+  const high = Math.max(a.value, b.value);
+  const low = Math.min(a.value, b.value);
+
+  // Normal adjacent cards, including K-A.
+  if (high - low === 1) return { isSequence: true, highValue: high };
+
+  // Ace-low adjacency for the two-card special cycle: A-2 is valid.
+  if (high === 14 && low === 2) return { isSequence: true, highValue: 2 };
+
+  return { isSequence: false, highValue: 0 };
 }
 function compareScores(a, b) {
   const max = Math.max(a.score.length, b.score.length);
@@ -21,14 +46,15 @@ function evaluateThreeCardHand(cards) {
   const values = sorted.map((c) => c.value);
   const suitRanks = sorted.map((c) => c.suitRank);
   const sameRank = values[0] === values[1] && values[1] === values[2];
-  const sequence = isSequence(sorted);
+  const sequenceInfo = getSequenceInfo(sorted);
+  const sequence = sequenceInfo.isSequence;
   const sameSuit = sorted.every((c) => c.suit === sorted[0].suit);
   const distinctSuitCount = new Set(sorted.map((c) => c.suit)).size;
   const isTrueTick = sequence && distinctSuitCount === 3;
   const sameColor = sorted.every((c) => c.color === sorted[0].color);
   if (sameRank) return { level: 6, name: "Danka", score: [6, values[0], Math.max(...suitRanks)], selectedCards: sorted };
-  if (sequence && sameSuit) return { level: 5, name: "Flash", score: [5, values[0], Math.max(...suitRanks)], selectedCards: sorted };
-  if (isTrueTick) return { level: 4, name: "Tick", score: [4, values[0], ...suitRanks], selectedCards: sorted };
+  if (sequence && sameSuit) return { level: 5, name: "Flash", score: [5, sequenceInfo.highValue, Math.max(...suitRanks)], selectedCards: sorted };
+  if (isTrueTick) return { level: 4, name: "Tick", score: [4, sequenceInfo.highValue, ...suitRanks], selectedCards: sorted };
   if (sameSuit) return { level: 3, name: "Color", score: [3, ...values, ...suitRanks], selectedCards: sorted };
   const counts = values.reduce((acc, value) => ({ ...acc, [value]: (acc[value] || 0) + 1 }), {});
   const pairValue = Number(Object.keys(counts).find((value) => counts[value] === 2));
@@ -53,12 +79,12 @@ function evaluateTwoCardHand(cards) {
   const sorted = cardSortDesc(cards);
   const [a, b] = sorted;
   const isPair = a.value === b.value;
-  const isTwoCardSequence = Math.abs(a.value - b.value) === 1;
+  const sequenceInfo = isTwoCardSequence(a, b);
   const isSameSuit = a.suit === b.suit;
   const isSameColor = a.color === b.color;
   if (isPair) return { level: 5, name: "Pair", score: [5, a.value, Math.max(a.suitRank, b.suitRank)], selectedCards: sorted };
-  if (isTwoCardSequence && isSameSuit) return { level: 4, name: "Flash", score: [4, Math.max(a.value, b.value), Math.max(a.suitRank, b.suitRank)], selectedCards: sorted };
-  if (isTwoCardSequence) return { level: 3, name: "Tick", score: [3, Math.max(a.value, b.value), a.suitRank, b.suitRank], selectedCards: sorted };
+  if (sequenceInfo.isSequence && isSameSuit) return { level: 4, name: "Flash", score: [4, sequenceInfo.highValue, Math.max(a.suitRank, b.suitRank)], selectedCards: sorted };
+  if (sequenceInfo.isSequence) return { level: 3, name: "Tick", score: [3, sequenceInfo.highValue, a.suitRank, b.suitRank], selectedCards: sorted };
   if (isSameSuit) return { level: 2, name: "Color", score: [2, a.value, b.value, a.suitRank, b.suitRank], selectedCards: sorted };
   return { level: 1, name: "High Card", score: [1, a.value, b.value, a.suitRank, b.suitRank], selectedCards: sorted };
 }
