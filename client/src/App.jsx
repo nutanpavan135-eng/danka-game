@@ -435,7 +435,7 @@ function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId
         type="button"
         disabled={!canChooseSeat}
         onClick={() => actions.chooseSeat(playerIndex)}
-        className={`seat avatar-seat perspective-seat ${isMe ? 'my-seat' : ''} ${isCurrentTurn ? 'active-player-seat' : ''} ${playerIndex === room.dealerIndex ? 'dealer' : ''} ${canChooseSeat ? 'clickable-seat' : ''}`}
+        className={`seat avatar-seat perspective-seat player-tone-${playerIndex % 8} ${isMe ? 'my-seat' : ''} ${isCurrentTurn ? 'active-player-seat' : ''} ${playerIndex === room.dealerIndex ? 'dealer' : ''} ${canChooseSeat ? 'clickable-seat' : ''}`}
         style={{ left: `${pos.x}%`, top: `${pos.y}%`, '--seat-scale': pos.scale }}
       >
         {showSeatNumbers && <div className="seat-label">Seat {playerIndex + 1}</div>}
@@ -681,6 +681,78 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
   );
 }
 
+
+function MobileInfoDrawers({ room }) {
+  const [openPanel, setOpenPanel] = useState(null);
+  const reveal = room.lastCycleReveal;
+  const close = () => setOpenPanel(null);
+
+  return (
+    <div className="mobile-drawer-system" aria-label="Mobile game panels">
+      <button type="button" className="mobile-edge-tab mobile-left-tab" onClick={() => setOpenPanel(openPanel === 'left' ? null : 'left')} aria-label="Open previous result panel">‹</button>
+      <button type="button" className="mobile-edge-tab mobile-right-tab" onClick={() => setOpenPanel(openPanel === 'right' ? null : 'right')} aria-label="Open players panel">›</button>
+
+      {openPanel && <button type="button" className="mobile-drawer-backdrop" onClick={close} aria-label="Close mobile panel" />}
+
+      <aside className={`mobile-slide-panel left-panel ${openPanel === 'left' ? 'is-open' : ''}`}>
+        <div className="mobile-panel-head">
+          <h2>Previous Result</h2>
+          <button type="button" onClick={close}>×</button>
+        </div>
+        {!reveal && <p className="muted">No previous cycle result yet.</p>}
+        {reveal && (
+          <div className="mobile-result-list">
+            <p className="winner-badge mobile-winner-badge">{reveal.winnerName} won with {reveal.winningHand?.name}</p>
+            {reveal.players.map((player, index) => (
+              <div key={player.id} className={`mobile-result-card ${player.id === reveal.winnerId ? 'winner-result' : ''}`}>
+                <div className="row between">
+                  <b>#{index + 1} {player.name}</b>
+                  <span>{player.handName}</span>
+                </div>
+                <p className="muted">{player.orderedCardsText}</p>
+                <div className="cards compact-picks">
+                  {(player.cards || []).map((card, cardIndex) => <PlayingCard key={cardIndex} card={card} hidden={false} />)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </aside>
+
+      <aside className={`mobile-slide-panel right-panel ${openPanel === 'right' ? 'is-open' : ''}`}>
+        <div className="mobile-panel-head">
+          <h2>Players</h2>
+          <button type="button" onClick={close}>×</button>
+        </div>
+        <div className="mobile-player-list">
+          {room.players.map((player, index) => (
+            <div key={player.id} className={`mobile-player-card player-tone-${index % 8} ${index === room.turnIndex ? 'turn' : ''} ${player.id === room.winnerId ? 'winner-result' : ''}`}>
+              <div className="row between">
+                <b>{player.name}</b>
+                <span>{index === room.turnIndex ? 'Turn' : player.role}</span>
+              </div>
+              <p className="muted">Coins: <b>{player.coins}</b> • Status: {player.status || '-'}</p>
+              <p className="muted">Cards: {player.cardCount || player.cards?.length || 0} • {player.sawCards ? 'Open' : 'Blind'}</p>
+            </div>
+          ))}
+        </div>
+        <SettlementPanel room={room} />
+      </aside>
+    </div>
+  );
+}
+
+function MobilePortraitNotice() {
+  return (
+    <div className="mobile-portrait-notice">
+      <div>
+        <strong>Rotate your phone</strong>
+        <p>Danka mobile is designed for landscape mode. Turn your phone sideways to play.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [entryMode, setEntryMode] = useState('choose');
   const [createName, setCreateName] = useState('Nutan');
@@ -785,6 +857,8 @@ export default function App() {
 
       {error && <p className="error">{error}</p>}
       <p className="notice compact-notice">{room.lastActionMessage}</p>
+      <MobilePortraitNotice />
+      <MobileInfoDrawers room={room} />
 
       <section className="game-split game-split-38">
         <div className="table-half">

@@ -2059,3 +2059,1669 @@ button.danger { background: #fb7185; color: #fff1f2; border-color: #fecdd3; }
   .floating-table-cards.me-cards .card.premium-card { width: 58px !important; height: 82px !important; }
   .perspective-seat.my-seat { top: 90% !important; }
 }
+
+/* Prototype 5.24 — Mobile landscape layout with slide panels */
+.mobile-drawer-system,
+.mobile-portrait-notice {
+  display: none;
+}
+
+@media (max-width: 950px) and (orientation: portrait) {
+  .mobile-portrait-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background: radial-gradient(circle at 50% 20%, #064e3b, #020617 72%);
+    text-align: center;
+  }
+  .mobile-portrait-notice > div {
+    width: min(420px, 92vw);
+    border-radius: 28px;
+    border: 1px solid rgba(251,191,36,.55);
+    background: rgba(2, 6, 23, .86);
+    padding: 26px;
+    box-shadow: 0 28px 70px rgba(0,0,0,.55);
+  }
+  .mobile-portrait-notice strong {
+    display: block;
+    color: #fbbf24;
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+  .mobile-portrait-notice p {
+    margin: 0;
+    color: #d1fae5;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  html, body, #root {
+    width: 100%;
+    min-height: 100%;
+    overflow: hidden;
+    background: #031a14;
+  }
+
+  .game-page {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+    padding: 6px 34px 6px;
+    gap: 4px;
+  }
+
+  .compact-topbar {
+    min-height: 32px;
+    padding: 0 4px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .compact-topbar h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .compact-topbar p {
+    display: none;
+  }
+
+  .top-right-controls {
+    gap: 6px;
+  }
+
+  .top-right-controls button,
+  .room-code {
+    min-width: auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+
+  .compact-notice,
+  .error {
+    position: fixed;
+    left: 50%;
+    top: 38px;
+    transform: translateX(-50%);
+    z-index: 50;
+    width: min(70vw, 680px);
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(2, 6, 23, .58);
+    border: 1px solid rgba(251,191,36,.28);
+  }
+
+  .game-split-38,
+  .game-split {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .table-half {
+    height: calc(100vh - 46px);
+    min-height: 0;
+  }
+
+  .control-half {
+    display: none;
+  }
+
+  .seat-table-panel,
+  .table-half-panel,
+  .perspective-table-panel {
+    height: 100%;
+    min-height: 0;
+    padding: 4px;
+    border-radius: 18px;
+    background: transparent;
+    border: 0;
+  }
+
+  .perspective-header {
+    display: none;
+  }
+
+  .table-action-banner {
+    position: fixed;
+    left: 50%;
+    top: 62px;
+    transform: translateX(-50%);
+    z-index: 48;
+    width: min(74vw, 720px);
+    margin: 0;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(3, 32, 25, .74);
+    backdrop-filter: blur(8px);
+  }
+
+  .perspective-stage,
+  .big-table-stage {
+    height: 100%;
+    min-height: 0;
+    border-radius: 28px;
+    padding: 0;
+    border-width: 1px;
+  }
+
+  .perspective-stage::before {
+    inset: 16px 24px 58px;
+    border-width: 7px;
+    border-radius: 46% / 35%;
+  }
+
+  .perspective-stage::after {
+    inset: 45px 92px 96px;
+    border-radius: 50% / 34%;
+  }
+
+  .perspective-felt-table {
+    width: min(76%, 760px) !important;
+    height: min(52%, 300px) !important;
+    border-width: 3px !important;
+    top: 48% !important;
+  }
+
+  .perspective-felt-table::before {
+    inset: 12px 24px;
+  }
+
+  .real-pot {
+    transform: scale(.68);
+  }
+
+  .center-deck-523 {
+    transform: translate(-50%, -50%) scale(.72) !important;
+  }
+
+  .perspective-seat {
+    min-width: 72px;
+    max-width: 86px;
+    padding: 4px 5px 6px;
+    border-radius: 14px;
+    font-size: 11px;
+  }
+
+  .perspective-seat.my-seat {
+    min-width: 88px;
+  }
+
+  .perspective-seat .avatar {
+    transform: scale(.52);
+    margin: -8px 0 -12px;
+  }
+
+  .perspective-seat b {
+    max-width: 72px;
+    font-size: 11px;
+  }
+
+  .perspective-seat small {
+    font-size: 10px;
+  }
+
+  .seat-label,
+  .seat-pick-mini {
+    font-size: 9px;
+    padding: 2px 5px;
+  }
+
+  .my-table-cards .card.premium-card {
+    width: 46px;
+    height: 64px;
+    border-radius: 10px;
+  }
+
+  .opponent-table-cards .card.premium-card {
+    width: 34px;
+    height: 48px;
+    border-radius: 8px;
+  }
+
+  .card .corner b,
+  .card .corner span {
+    font-size: 11px;
+  }
+
+  .opponent-table-cards .card .corner b,
+  .opponent-table-cards .card .corner span {
+    font-size: 8px;
+  }
+
+  .card .center-suit {
+    font-size: 24px;
+  }
+
+  .opponent-table-cards .card .center-suit {
+    font-size: 17px;
+  }
+
+  .back-logo {
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+  }
+
+  .back-border {
+    inset: 8px;
+  }
+
+  .table-action-dock {
+    bottom: 7px;
+    width: min(94vw, 820px);
+  }
+
+  .table-action-dock .actions {
+    width: auto;
+    max-width: 94vw;
+    gap: 6px;
+    padding: 7px 8px;
+    border-radius: 18px;
+    background: rgba(2, 8, 7, .78);
+    border: 1px solid rgba(251,191,36,.26);
+    box-shadow: 0 14px 34px rgba(0,0,0,.44);
+  }
+
+  .table-action-dock .actions > button,
+  .table-action-dock .cut-panel button {
+    min-width: 68px;
+    padding: 8px 9px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .table-action-dock .cut-panel {
+    max-width: 92vw;
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .mobile-drawer-system {
+    display: block;
+  }
+
+  .mobile-edge-tab {
+    position: fixed;
+    top: 50%;
+    z-index: 110;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 72px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(251,191,36,.55);
+    background: rgba(2, 6, 23, .74);
+    color: #fbbf24;
+    font-size: 28px;
+    line-height: 1;
+    box-shadow: 0 12px 30px rgba(0,0,0,.42);
+    backdrop-filter: blur(8px);
+  }
+
+  .mobile-left-tab {
+    left: 2px;
+  }
+
+  .mobile-right-tab {
+    right: 2px;
+  }
+
+  .mobile-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(0,0,0,.22);
+  }
+
+  .mobile-slide-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 120;
+    width: min(360px, 48vw);
+    padding: 12px;
+    overflow: auto;
+    background: linear-gradient(180deg, rgba(4, 47, 35, .97), rgba(2, 6, 23, .97));
+    border: 1px solid rgba(251,191,36,.34);
+    box-shadow: 0 24px 70px rgba(0,0,0,.55);
+    transition: transform .22s ease;
+  }
+
+  .mobile-slide-panel.left-panel {
+    left: 0;
+    transform: translateX(-104%);
+    border-radius: 0 22px 22px 0;
+  }
+
+  .mobile-slide-panel.right-panel {
+    right: 0;
+    transform: translateX(104%);
+    border-radius: 22px 0 0 22px;
+  }
+
+  .mobile-slide-panel.is-open {
+    transform: translateX(0);
+  }
+
+  .mobile-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-panel-head h2 {
+    margin: 0;
+    color: #fef3c7;
+    font-size: 18px;
+  }
+
+  .mobile-panel-head button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 999px;
+    background: #fbbf24;
+    color: #111827;
+    font-size: 20px;
+  }
+
+  .mobile-result-list,
+  .mobile-player-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-result-card,
+  .mobile-player-card {
+    padding: 9px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.08);
+  }
+
+  .mobile-player-card.turn,
+  .mobile-result-card.winner-result {
+    outline: 2px solid #fbbf24;
+    background: rgba(251,191,36,.14);
+  }
+
+  .mobile-result-card p,
+  .mobile-player-card p {
+    margin: 4px 0;
+    font-size: 11px;
+  }
+
+  .mobile-winner-badge {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .mobile-slide-panel .settlement-panel,
+  .mobile-slide-panel .panel {
+    margin-top: 10px;
+  }
+
+  .placecut-instructions {
+    top: 8px;
+    left: 42px;
+    right: 42px;
+    padding: 7px 10px;
+    border-radius: 14px;
+  }
+
+  .placecut-instructions h2 {
+    font-size: 16px;
+  }
+
+  .placecut-instructions p,
+  .placecut-instructions strong {
+    font-size: 11px;
+  }
+
+  .deck-spread {
+    width: 82%;
+    height: 62%;
+    top: 54%;
+    gap: 4px 2px;
+  }
+
+  .spread-card {
+    width: clamp(20px, 3.1vw, 34px);
+    height: clamp(30px, 4.7vw, 48px);
+  }
+
+  .ranked-picks {
+    width: 72%;
+    gap: 8px;
+  }
+
+  .ranked-pick {
+    min-width: 58px;
+    padding: 6px;
+    font-size: 10px;
+  }
+
+  .seat-choose-hint {
+    bottom: 52px;
+    padding: 7px 12px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .game-page {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  .perspective-seat {
+    transform: translate(-50%, -50%) scale(calc(var(--seat-scale, 1) * .9));
+  }
+  .perspective-felt-table {
+    width: min(78%, 640px) !important;
+    height: min(50%, 250px) !important;
+  }
+  .table-action-banner,
+  .compact-notice {
+    width: 62vw;
+  }
+  .mobile-slide-panel {
+    width: min(330px, 56vw);
+  }
+}
+
+/* Prototype 5.24.1 — Mobile landscape hard fit and clean table alignment */
+:root {
+  --safe-mobile-gutter: 22px;
+}
+
+/* Entry screens: make create/join/home fit inside one landscape screen. */
+@media (max-width: 950px) and (orientation: landscape) {
+  html, body, #root {
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  .entry-home {
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    padding: 8px 18px !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    align-items: start !important;
+    justify-items: center !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+  }
+
+  .entry-hero {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .entry-hero h1 {
+    font-size: clamp(38px, 9vh, 58px) !important;
+    line-height: .9 !important;
+    letter-spacing: .08em !important;
+    margin: 0 0 4px !important;
+  }
+
+  .entry-hero p {
+    margin: 3px 0 !important;
+    font-size: clamp(11px, 2.4vh, 14px) !important;
+    line-height: 1.1 !important;
+  }
+
+  .entry-choice-panel,
+  .entry-form-panel {
+    width: min(86vw, 720px) !important;
+    max-height: calc(100vh - 96px) !important;
+    margin: 0 auto !important;
+    padding: clamp(12px, 2.6vh, 18px) !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+  }
+
+  .entry-choice-panel h2,
+  .entry-form-panel h2 {
+    font-size: clamp(20px, 4.8vh, 28px) !important;
+    margin: 0 0 4px !important;
+    line-height: 1.05 !important;
+  }
+
+  .entry-muted,
+  .entry-form-head .muted {
+    margin: 0 0 10px !important;
+    font-size: clamp(10px, 2.4vh, 13px) !important;
+    line-height: 1.2 !important;
+  }
+
+  .entry-choice-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  .entry-card-button {
+    min-height: 108px !important;
+    padding: 16px 18px !important;
+    border-radius: 20px !important;
+  }
+
+  .entry-card-button span {
+    font-size: clamp(19px, 4.6vh, 26px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .entry-card-button small {
+    margin-top: 14px !important;
+    font-size: clamp(10px, 2.4vh, 13px) !important;
+    line-height: 1.2 !important;
+  }
+
+  .entry-form-panel {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    column-gap: 14px !important;
+    row-gap: 6px !important;
+    align-content: start !important;
+  }
+
+  .entry-form-head,
+  .entry-form-panel .tiny-help,
+  .entry-form-panel > button,
+  .entry-form-panel > .error {
+    grid-column: 1 / -1 !important;
+  }
+
+  .entry-form-head {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: center !important;
+    gap: 8px 12px !important;
+    margin: 0 0 2px !important;
+  }
+
+  .entry-form-head h2 { margin: 0 !important; }
+  .entry-form-head p { grid-column: 1 / -1 !important; }
+
+  .back-link {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+
+  .entry-form-panel label {
+    margin: 2px 0 0 !important;
+    font-size: 12px !important;
+  }
+
+  .entry-form-panel input {
+    min-height: 32px !important;
+    height: 34px !important;
+    padding: 7px 10px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  .entry-form-panel .tiny-help {
+    margin: 2px 0 0 !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+  }
+
+  .entry-form-panel > button:not(.back-link) {
+    min-height: 36px !important;
+    padding: 8px 14px !important;
+    margin-top: 2px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* Game table: mobile landscape should behave like a fixed 100vw x 100vh game board. */
+@media (max-width: 950px) and (orientation: landscape) {
+  .game-page {
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    padding: 5px var(--safe-mobile-gutter) 5px !important;
+    gap: 2px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .compact-topbar {
+    height: 31px !important;
+    min-height: 31px !important;
+    padding: 0 4px !important;
+    overflow: visible !important;
+  }
+
+  .compact-topbar h1 {
+    font-size: 17px !important;
+    line-height: 1 !important;
+  }
+
+  .top-right-controls {
+    position: fixed !important;
+    right: calc(var(--safe-mobile-gutter) + 14px) !important;
+    top: 7px !important;
+    z-index: 180 !important;
+  }
+
+  .room-code,
+  .top-right-controls button {
+    min-height: 30px !important;
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .compact-notice {
+    top: 8px !important;
+    width: min(52vw, 460px) !important;
+    max-height: 22px !important;
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    z-index: 150 !important;
+  }
+
+  .error {
+    top: 39px !important;
+    width: min(68vw, 640px) !important;
+    max-height: 23px !important;
+    padding: 5px 12px !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    z-index: 150 !important;
+  }
+
+  .game-split-38,
+  .game-split,
+  .table-half {
+    width: 100% !important;
+    height: calc(100vh - 36px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .seat-table-panel,
+  .table-half-panel,
+  .perspective-table-panel {
+    height: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .table-action-banner {
+    top: 65px !important;
+    width: min(70vw, 660px) !important;
+    max-height: 24px !important;
+    padding: 5px 12px !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    z-index: 145 !important;
+  }
+
+  .perspective-stage,
+  .big-table-stage {
+    height: 100% !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    border-radius: 22px !important;
+    border-width: 1px !important;
+    overflow: hidden !important;
+  }
+
+  /* Keep the outer rail even and centered around the inner table. */
+  .perspective-stage::before {
+    inset: 42px 58px 22px !important;
+    border-width: 7px !important;
+    border-radius: 47% / 35% !important;
+  }
+
+  .perspective-felt-table {
+    width: min(74vw, 660px) !important;
+    height: min(45vh, 210px) !important;
+    left: 50% !important;
+    top: 54% !important;
+    border-width: 3px !important;
+    border-radius: 47% / 31% !important;
+  }
+
+  .perspective-felt-table::before {
+    inset: 10px 22px !important;
+    border-radius: 47% / 31% !important;
+  }
+
+  /* Smaller seats, outside rail, unique color tones. */
+  .perspective-seat {
+    min-width: 58px !important;
+    max-width: 70px !important;
+    padding: 3px 4px 4px !important;
+    border-radius: 12px !important;
+    font-size: 9px !important;
+    line-height: 1.05 !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,.34) !important;
+  }
+
+  .perspective-seat .avatar {
+    transform: scale(.42) !important;
+    margin: -11px 0 -15px !important;
+  }
+
+  .perspective-seat b {
+    max-width: 62px !important;
+    font-size: 10px !important;
+    line-height: 1.05 !important;
+  }
+
+  .perspective-seat small {
+    font-size: 8.5px !important;
+    line-height: 1.05 !important;
+  }
+
+  .perspective-seat.my-seat {
+    min-width: 68px !important;
+    top: 88% !important;
+  }
+
+  /* Cards stay inside the felt and scale with screen size. */
+  .floating-table-cards {
+    z-index: 64 !important;
+  }
+
+  .floating-table-cards .card.premium-card,
+  .floating-table-cards.me-cards .card.premium-card,
+  .my-table-cards .card.premium-card,
+  .opponent-table-cards .card.premium-card {
+    width: clamp(30px, 5.3vw, 46px) !important;
+    height: clamp(42px, 7.3vw, 64px) !important;
+    border-radius: 8px !important;
+  }
+
+  .floating-table-cards.me-cards {
+    --card-target-scale: .92 !important;
+    transform: translate(-50%, calc(-50% + 8px)) scale(var(--card-target-scale, .92)) !important;
+  }
+
+  .floating-table-cards .table-card-wrap {
+    margin-left: -6px !important;
+  }
+
+  .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: clamp(18px, 3.9vw, 28px) !important;
+  }
+
+  .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: clamp(10px, 2vw, 14px) !important;
+  }
+
+  .my-table-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .floating-table-cards.me-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: clamp(20px, 4.1vw, 30px) !important;
+  }
+
+  .my-table-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .floating-table-cards.me-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: clamp(11px, 2.1vw, 15px) !important;
+  }
+
+  .opponent-table-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .floating-table-cards:not(.me-cards) .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: clamp(17px, 3.5vw, 24px) !important;
+  }
+
+  .opponent-table-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .floating-table-cards:not(.me-cards) .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: clamp(9px, 1.8vw, 12px) !important;
+  }
+
+  .clean-card-back .back-logo {
+    width: clamp(18px, 3.4vw, 24px) !important;
+    height: clamp(18px, 3.4vw, 24px) !important;
+    font-size: clamp(12px, 2.4vw, 17px) !important;
+  }
+
+  .real-pot.casino-pot,
+  .perspective-felt-table .real-pot,
+  .real-pot {
+    top: 49.5% !important;
+    transform: translate(-50%, -50%) scale(.54) !important;
+    z-index: 75 !important;
+  }
+
+  .center-deck-523 {
+    width: 42px !important;
+    height: 58px !important;
+    top: 51% !important;
+  }
+
+  .center-deck-523::after {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 15px !important;
+  }
+
+  .flying-deal-card-523 {
+    width: 32px !important;
+    height: 45px !important;
+    border-radius: 7px !important;
+    font-size: 18px !important;
+  }
+
+  /* Action buttons: one row, never over the player profile. */
+  .table-action-dock {
+    bottom: 5px !important;
+    width: calc(100vw - 120px) !important;
+    z-index: 130 !important;
+  }
+
+  .table-action-dock .actions {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .action-groups {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 98px 1fr !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding-right: 86px !important;
+  }
+
+  .action-group {
+    max-width: none !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    padding: 0 !important;
+  }
+
+  .action-group-left { justify-content: flex-end !important; }
+  .action-group-right { justify-content: flex-start !important; padding-left: 8px !important; }
+  .action-center-gap { display: block !important; min-width: 98px !important; }
+  .action-groups.only-right .action-group-right { grid-column: 3 !important; }
+  .action-groups.only-left .action-group-left { grid-column: 1 !important; }
+
+  .action-group button,
+  .table-action-dock .actions > button,
+  .table-action-dock .cut-panel button {
+    min-width: 64px !important;
+    min-height: 35px !important;
+    padding: 7px 8px !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  .table-action-dock .fixed-drop-action {
+    right: 2px !important;
+    top: 50% !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    min-width: 76px !important;
+    min-height: 35px !important;
+  }
+
+  /* Popups should not dominate mobile screen. */
+  .one-card-popup {
+    min-width: 0 !important;
+    width: min(62vw, 460px) !important;
+    padding: 12px 18px !important;
+    border-radius: 18px !important;
+    top: 42% !important;
+  }
+
+  .one-card-popup strong {
+    font-size: clamp(18px, 4.8vh, 28px) !important;
+    line-height: 1.05 !important;
+  }
+
+  .winner-pop-popup strong::before,
+  .winner-pop-popup strong::after,
+  .well-cut-popup strong::before,
+  .well-cut-popup strong::after {
+    margin: 0 5px !important;
+  }
+
+  /* Place Cut spread compact inside the table; instruction bar stays readable. */
+  .placecut-instructions {
+    top: 4px !important;
+    left: 18px !important;
+    right: 18px !important;
+    max-height: 50px !important;
+    padding: 6px 10px !important;
+    overflow: hidden !important;
+    border-radius: 12px !important;
+  }
+
+  .placecut-instructions h2 {
+    font-size: 14px !important;
+    line-height: 1 !important;
+    margin: 0 0 2px !important;
+  }
+
+  .placecut-instructions p,
+  .placecut-instructions strong {
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+  }
+
+  .deck-spread {
+    width: min(82vw, 680px) !important;
+    height: min(63vh, 250px) !important;
+    top: 57% !important;
+    gap: 3px 2px !important;
+    align-content: center !important;
+  }
+
+  .spread-card {
+    width: clamp(18px, 3.1vw, 28px) !important;
+    height: clamp(26px, 4.4vw, 40px) !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+  }
+
+  .seat-pick .card.premium-card {
+    width: 34px !important;
+    height: 48px !important;
+  }
+
+  .seat-pick {
+    transform: translateX(-50%) scale(.66) !important;
+    top: -44px !important;
+  }
+
+  .mobile-edge-tab {
+    width: 30px !important;
+    height: 58px !important;
+    font-size: 25px !important;
+    z-index: 170 !important;
+  }
+
+  .mobile-left-tab { left: 3px !important; }
+  .mobile-right-tab { right: 3px !important; }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  :root { --safe-mobile-gutter: 18px; }
+
+  .perspective-stage::before {
+    inset: 38px 46px 20px !important;
+  }
+
+  .perspective-felt-table {
+    width: min(74vw, 560px) !important;
+    height: min(43vh, 190px) !important;
+    top: 55% !important;
+  }
+
+  .action-groups {
+    grid-template-columns: 1fr 88px 1fr !important;
+    padding-right: 74px !important;
+  }
+
+  .action-center-gap { min-width: 88px !important; }
+  .action-group-right { padding-left: 6px !important; }
+
+  .action-group button,
+  .table-action-dock .actions > button {
+    min-width: 58px !important;
+    min-height: 32px !important;
+    padding: 6px 7px !important;
+    font-size: 10px !important;
+  }
+
+  .table-action-dock .fixed-drop-action {
+    min-width: 68px !important;
+    min-height: 32px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
+/* Stable, soft per-player colors. */
+.perspective-seat.player-tone-0,
+.mobile-player-card.player-tone-0 { background: linear-gradient(180deg, #14b8a6, #0f766e) !important; }
+.perspective-seat.player-tone-1,
+.mobile-player-card.player-tone-1 { background: linear-gradient(180deg, #38bdf8, #0369a1) !important; }
+.perspective-seat.player-tone-2,
+.mobile-player-card.player-tone-2 { background: linear-gradient(180deg, #a78bfa, #6d28d9) !important; }
+.perspective-seat.player-tone-3,
+.mobile-player-card.player-tone-3 { background: linear-gradient(180deg, #f59e0b, #b45309) !important; }
+.perspective-seat.player-tone-4,
+.mobile-player-card.player-tone-4 { background: linear-gradient(180deg, #fb7185, #be123c) !important; }
+.perspective-seat.player-tone-5,
+.mobile-player-card.player-tone-5 { background: linear-gradient(180deg, #84cc16, #4d7c0f) !important; }
+.perspective-seat.player-tone-6,
+.mobile-player-card.player-tone-6 { background: linear-gradient(180deg, #22c55e, #15803d) !important; }
+.perspective-seat.player-tone-7,
+.mobile-player-card.player-tone-7 { background: linear-gradient(180deg, #94a3b8, #475569) !important; }
+
+.perspective-seat.player-tone-0 b,
+.perspective-seat.player-tone-1 b,
+.perspective-seat.player-tone-2 b,
+.perspective-seat.player-tone-3 b,
+.perspective-seat.player-tone-4 b,
+.perspective-seat.player-tone-5 b,
+.perspective-seat.player-tone-6 b,
+.perspective-seat.player-tone-7 b,
+.perspective-seat.player-tone-0 small,
+.perspective-seat.player-tone-1 small,
+.perspective-seat.player-tone-2 small,
+.perspective-seat.player-tone-3 small,
+.perspective-seat.player-tone-4 small,
+.perspective-seat.player-tone-5 small,
+.perspective-seat.player-tone-6 small,
+.perspective-seat.player-tone-7 small {
+  color: #fff !important;
+}
+
+.perspective-seat.my-seat.active-player-seat,
+.perspective-seat.active-player-seat {
+  border-color: #fde68a !important;
+}
+
+/* Prototype 5.24.3 — mobile Place Cut, action-button, card-face, and winner-popup refinement */
+@media (max-width: 950px) and (orientation: landscape) {
+  /* Two top messages now stack neatly: last action first, current instruction directly below it. */
+  .compact-notice {
+    top: 8px !important;
+    width: min(52vw, 470px) !important;
+    max-height: 21px !important;
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+  }
+
+  .table-action-banner {
+    top: 39px !important;
+    width: min(52vw, 470px) !important;
+    max-height: 21px !important;
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    z-index: 146 !important;
+  }
+
+  /* Keep Place Cut cards inside the felt area and away from player profiles. */
+  .placecut-table-layer {
+    inset: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .placecut-instructions {
+    top: 61px !important;
+    left: 48px !important;
+    right: 48px !important;
+    max-height: 36px !important;
+    padding: 5px 9px !important;
+    border-radius: 11px !important;
+    opacity: .94 !important;
+  }
+
+  .placecut-instructions h2 {
+    font-size: 12px !important;
+    line-height: 1 !important;
+    margin: 0 0 1px !important;
+  }
+
+  .placecut-instructions p,
+  .placecut-instructions strong {
+    font-size: 8px !important;
+    line-height: 1.05 !important;
+  }
+
+  .deck-spread {
+    width: min(66vw, 610px) !important;
+    height: min(47vh, 205px) !important;
+    top: 58% !important;
+    grid-template-columns: repeat(13, minmax(16px, 1fr)) !important;
+    grid-template-rows: repeat(4, 1fr) !important;
+    gap: 5px 2px !important;
+    align-items: center !important;
+    justify-items: center !important;
+    align-content: center !important;
+    justify-content: center !important;
+  }
+
+  .spread-card {
+    width: clamp(16px, 2.45vw, 24px) !important;
+    height: clamp(23px, 3.55vw, 34px) !important;
+    min-width: 0 !important;
+    border-radius: 5px !important;
+    font-size: clamp(9px, 1.65vw, 13px) !important;
+    padding: 0 !important;
+  }
+
+  /* Seat-selection result: cards stay clear, and the waiting note stays above them. */
+  .ranked-picks {
+    top: 58% !important;
+    width: min(62vw, 560px) !important;
+    gap: 8px !important;
+    z-index: 70 !important;
+  }
+
+  .ranked-pick {
+    min-width: 74px !important;
+    padding: 6px 7px !important;
+    border-radius: 14px !important;
+    font-size: 9px !important;
+  }
+
+  .ranked-pick .card.premium-card {
+    width: 46px !important;
+    height: 64px !important;
+  }
+
+  .seat-choose-hint {
+    top: 110px !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    max-width: min(58vw, 470px) !important;
+    padding: 6px 12px !important;
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    z-index: 82 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Small selected Place Cut card above each profile, but still readable. */
+  .seat-pick {
+    top: -42px !important;
+    transform: translateX(-50%) scale(.78) !important;
+    z-index: 92 !important;
+  }
+
+  .seat-pick .card.premium-card {
+    width: 42px !important;
+    height: 58px !important;
+    border-radius: 8px !important;
+  }
+
+  .seat-pick .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 25px !important;
+  }
+
+  .seat-pick .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 12px !important;
+  }
+
+  /* Preserve desktop-style card look, but scale rank/suit properly for mobile cards. */
+  .card.clean-face-card .clean-corner.rank-only {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .card.clean-face-card .clean-corner.top-left {
+    top: 4px !important;
+    left: 4px !important;
+  }
+
+  .card.clean-face-card .clean-corner.bottom-right {
+    right: 4px !important;
+    bottom: 4px !important;
+    transform: rotate(180deg) !important;
+  }
+
+  .floating-table-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .my-table-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .opponent-table-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: clamp(18px, 3.15vw, 25px) !important;
+    line-height: 1 !important;
+  }
+
+  .floating-table-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .my-table-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .opponent-table-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: clamp(9px, 1.55vw, 12px) !important;
+    line-height: 1 !important;
+    letter-spacing: -.5px !important;
+  }
+
+  /* Action buttons are now fixed around the player profile: left actions, profile gap, right actions, then Drop. */
+  .table-action-dock {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 10px !important;
+    width: 100vw !important;
+    transform: none !important;
+    display: block !important;
+    pointer-events: none !important;
+    z-index: 132 !important;
+  }
+
+  .table-action-dock .actions {
+    position: relative !important;
+    width: 100vw !important;
+    height: 38px !important;
+    display: block !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .action-groups {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 38px !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .action-group {
+    position: absolute !important;
+    bottom: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    pointer-events: auto !important;
+  }
+
+  .action-group-left {
+    right: calc(50% + 52px) !important;
+    justify-content: flex-end !important;
+  }
+
+  .action-group-right {
+    left: calc(50% + 42px) !important;
+    justify-content: flex-start !important;
+    padding-left: 0 !important;
+  }
+
+  .action-center-gap {
+    display: none !important;
+  }
+
+  .action-group button,
+  .table-action-dock .actions > button,
+  .table-action-dock .cut-panel button {
+    min-width: 64px !important;
+    min-height: 35px !important;
+    padding: 7px 9px !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    pointer-events: auto !important;
+  }
+
+  .table-action-dock .fixed-drop-action {
+    position: absolute !important;
+    right: 64px !important;
+    top: auto !important;
+    bottom: 0 !important;
+    transform: none !important;
+    min-width: 72px !important;
+    min-height: 35px !important;
+    pointer-events: auto !important;
+  }
+
+  /* Winner popup: move decorative cash/chips away from the sentence. */
+  .cash-award-fly {
+    top: 42% !important;
+    z-index: 88 !important;
+    transform: translate(-50%, -118%) scale(.72) !important;
+    animation: cashAwardMobileSafe5243 1.25s ease-in-out both !important;
+  }
+
+  .cash-award-fly::before,
+  .cash-award-fly::after {
+    width: 24px !important;
+    height: 24px !important;
+    border-width: 3px !important;
+    margin: 0 -2px !important;
+  }
+
+  .winner-pop-popup {
+    z-index: 92 !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+  }
+
+  .winner-pop-popup strong {
+    display: block !important;
+    padding: 0 8px !important;
+  }
+
+  .winner-pop-popup strong::before,
+  .winner-pop-popup strong::after {
+    display: none !important;
+  }
+
+  @keyframes cashAwardMobileSafe5243 {
+    0% { opacity: 0; transform: translate(-50%, -135%) scale(.45); }
+    18% { opacity: 1; transform: translate(-50%, -125%) scale(.82); }
+    72% { opacity: 1; transform: translate(-50%, -118%) scale(.72); }
+    100% { opacity: 0; transform: translate(-50%, -165%) scale(.58); }
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .action-group-left { right: calc(50% + 48px) !important; }
+  .action-group-right { left: calc(50% + 38px) !important; }
+  .table-action-dock .fixed-drop-action { right: 52px !important; min-width: 68px !important; }
+  .action-group button,
+  .table-action-dock .actions > button,
+  .table-action-dock .cut-panel button {
+    min-width: 58px !important;
+    min-height: 32px !important;
+    padding: 6px 7px !important;
+    font-size: 10px !important;
+  }
+  .deck-spread {
+    width: 65vw !important;
+    height: min(45vh, 180px) !important;
+    gap: 4px 1px !important;
+  }
+  .spread-card {
+    width: clamp(15px, 2.25vw, 21px) !important;
+    height: clamp(22px, 3.35vw, 30px) !important;
+  }
+}
+
+/* Prototype 5.24.4 — final mobile place-cut instruction and action-row alignment polish */
+@media (max-width: 950px) and (orientation: landscape) {
+  /* Move the Place Cut helper box above the table/felt area, not on top of the cards/table. */
+  .placecut-instructions {
+    top: 14px !important;
+    left: 54px !important;
+    right: 54px !important;
+    max-height: 31px !important;
+    padding: 4px 8px !important;
+    border-radius: 10px !important;
+    z-index: 120 !important;
+  }
+
+  .placecut-instructions h2 {
+    font-size: 11.5px !important;
+    line-height: 1 !important;
+    margin: 0 0 1px !important;
+  }
+
+  .placecut-instructions p,
+  .placecut-instructions strong {
+    font-size: 7.5px !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+  }
+
+  /* Keep the card spread lower and fully inside the felt/table area after moving the helper box up. */
+  .deck-spread {
+    top: 59% !important;
+    width: min(65vw, 600px) !important;
+    height: min(45vh, 198px) !important;
+  }
+
+  /* Bottom action row: left actions stay left of profile, right actions stay right of profile, Drop aligns with the same row. */
+  .table-action-dock {
+    bottom: 13px !important;
+    height: 36px !important;
+  }
+
+  .table-action-dock .actions,
+  .action-groups {
+    height: 36px !important;
+  }
+
+  .action-group {
+    top: 0 !important;
+    bottom: auto !important;
+    height: 36px !important;
+    align-items: center !important;
+  }
+
+  .action-group-left {
+    right: calc(50% + 74px) !important;
+  }
+
+  .action-group-right {
+    left: calc(50% + 62px) !important;
+  }
+
+  .action-group button,
+  .table-action-dock .actions > button,
+  .table-action-dock .cut-panel button {
+    min-height: 35px !important;
+    height: 35px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .table-action-dock .fixed-drop-action {
+    top: 0 !important;
+    bottom: auto !important;
+    height: 35px !important;
+    min-height: 35px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .placecut-instructions {
+    top: 12px !important;
+    left: 48px !important;
+    right: 48px !important;
+    max-height: 29px !important;
+  }
+
+  .deck-spread {
+    top: 55.5% !important;
+    width: 64vw !important;
+    height: min(43vh, 174px) !important;
+  }
+
+  .action-group-left {
+    right: calc(50% + 68px) !important;
+  }
+
+  .action-group-right {
+    left: calc(50% + 56px) !important;
+  }
+
+  .action-group button,
+  .table-action-dock .actions > button,
+  .table-action-dock .cut-panel button,
+  .table-action-dock .fixed-drop-action {
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+}
+
+/* Prototype 5.24.5 — mobile seat-choice result size and vertical alignment polish */
+@media (max-width: 950px) and (orientation: landscape) {
+  /* Move the waiting badge and ranked cards upward, and make the cards smaller so they do not cover the lower player profile. */
+  .seat-choose-hint {
+    top: 82px !important;
+    max-width: min(54vw, 430px) !important;
+    padding: 5px 11px !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+    z-index: 92 !important;
+  }
+
+  .ranked-picks {
+    top: 49% !important;
+    width: min(54vw, 500px) !important;
+    gap: 7px !important;
+    align-items: flex-start !important;
+    z-index: 72 !important;
+  }
+
+  .ranked-pick {
+    min-width: 62px !important;
+    max-width: 72px !important;
+    padding: 5px 6px !important;
+    border-radius: 12px !important;
+    font-size: 8.5px !important;
+  }
+
+  .ranked-pick span:first-child {
+    font-size: 10px !important;
+    padding: 2px 7px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .ranked-pick .card.premium-card {
+    width: 36px !important;
+    height: 50px !important;
+    border-radius: 7px !important;
+  }
+
+  .ranked-pick .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 22px !important;
+  }
+
+  .ranked-pick .card.clean-face-card .clean-corner.rank-only {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .ranked-pick .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 10px !important;
+  }
+
+  .ranked-pick b {
+    font-size: 7.5px !important;
+    line-height: 1 !important;
+    max-width: 58px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .seat-choose-hint {
+    top: 76px !important;
+    max-width: min(56vw, 390px) !important;
+    font-size: 9.5px !important;
+    padding: 5px 10px !important;
+  }
+
+  .ranked-picks {
+    top: 47% !important;
+    width: min(56vw, 430px) !important;
+    gap: 5px !important;
+  }
+
+  .ranked-pick {
+    min-width: 56px !important;
+    max-width: 64px !important;
+    padding: 4px 5px !important;
+  }
+
+  .ranked-pick .card.premium-card {
+    width: 32px !important;
+    height: 45px !important;
+  }
+
+  .ranked-pick .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 20px !important;
+  }
+
+  .ranked-pick .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 9px !important;
+  }
+}
+
+/* Prototype 5.24.10 — mobile pot counter moved clearly above the local player cards */
+@media (max-width: 950px) and (orientation: landscape) {
+  .perspective-felt-table .real-pot.casino-pot,
+  .real-pot.casino-pot {
+    position: absolute !important;
+    left: 50% !important;
+    right: auto !important;
+    top: 52.5% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 190 !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+    pointer-events: none !important;
+  }
+
+  .real-pot.casino-pot .casino-pot-stack,
+  .real-pot.casino-pot::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .real-pot.casino-pot b {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 54px !important;
+    min-height: 24px !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 1000 !important;
+    color: #111827 !important;
+    background: linear-gradient(180deg, #fde68a, #fbbf24) !important;
+    border: 1px solid rgba(255,255,255,.72) !important;
+    box-shadow: 0 6px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.45) !important;
+    text-shadow: none !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .perspective-felt-table .real-pot.casino-pot,
+  .real-pot.casino-pot {
+    top: 51% !important;
+  }
+
+  .real-pot.casino-pot b {
+    min-width: 48px !important;
+    min-height: 22px !important;
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+  }
+}
