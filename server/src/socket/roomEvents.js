@@ -1,4 +1,4 @@
-const { rooms, deleteRoom } = require("../rooms/roomStore");
+const { rooms, deleteRoom, saveRooms, touchRoom } = require("../rooms/roomStore");
 const { generateRoomCode, createPlayer, createRoom } = require("../rooms/roomFactory");
 const { getRoomStateForPlayer, broadcastPrivateRoomState } = require("../rooms/roomState");
 const { calculateCycleTarget, attachSocketToPlayer } = require("../rooms/roomHelpers");
@@ -71,6 +71,8 @@ function registerRoomEvents(io, socket) {
 
     attachSocketToPlayer(room, socket, player.id);
     socket.join(room.roomCode);
+    touchRoom(room, "sync-room");
+    saveRooms();
     callback?.({ success: true, roomCode: room.roomCode, playerId: player.id, room: getRoomStateForPlayer(room, player.id) });
   });
 
@@ -95,15 +97,39 @@ function registerRoomEvents(io, socket) {
 
   socket.on("leaveRoom", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
-    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    if (!room) return callback?.({ success: false, error: "Room not found. It may have expired or the session ended." });
     attachSocketToPlayer(room, socket, playerId);
     const idx = room.players.findIndex((p) => p.id === playerId);
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
+
     const [leaving] = room.players.splice(idx, 1);
     socket.leave(room.roomCode);
-    if (room.players.length === 0) { deleteRoom(room.roomCode); return callback?.({ success: true }); }
-    if (leaving.id === room.adminPlayerId) { room.adminPlayerId = room.players[0].id; room.players[0].role = "admin"; }
-    room.lastActionMessage = `${leaving.name} left the room.`;
+
+    // Remove old Place Cut references for the leaving player so future setup screens stay clean.
+    room.placeCutPicks = (room.placeCutPicks || []).filter((p) => p.playerId !== leaving.id);
+    room.placeCutOrder = (room.placeCutOrder || []).filter((p) => p.playerId !== leaving.id);
+
+    if (room.players.length === 0) {
+      deleteRoom(room.roomCode);
+      return callback?.({ success: true });
+    }
+
+    if (leaving.id === room.adminPlayerId) {
+      room.adminPlayerId = room.players[0].id;
+      room.players[0].role = "admin";
+    }
+
+    room.dealerIndex = Math.max(0, Math.min(room.dealerIndex || 0, room.players.length - 1));
+    room.turnIndex = Math.max(0, Math.min(room.turnIndex || 0, room.players.length - 1));
+    room.seatCount = room.players.length;
+
+    if (room.players.length < LIMITS.MIN_PLAYERS && !["lobby", "sessionEnded"].includes(room.status)) {
+      room.status = "sessionEnded";
+      room.lastActionMessage = `${leaving.name} left the room. Session ended because fewer than two players remain.`;
+    } else {
+      room.lastActionMessage = `${leaving.name} left the room.`;
+    }
+
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
   });
