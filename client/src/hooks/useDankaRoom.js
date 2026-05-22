@@ -1,5 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { socket, connectSocket } from '../socket';
+
+const SESSION_KEY = 'danka.prototype526.session';
+
+function readSavedSession() {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.roomCode || !parsed?.playerId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(session) {
+  try {
+    if (!session?.roomCode || !session?.playerId) return;
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify({
+      roomCode: session.roomCode,
+      playerId: session.playerId,
+      playerName: session.playerName || '',
+      savedAt: Date.now(),
+    }));
+  } catch {
+    // Storage can fail in private mode; the game still works without refresh restore.
+  }
+}
+
+function clearSavedSession() {
+  try { window.localStorage.removeItem(SESSION_KEY); } catch {}
+}
 
 export function useDankaRoom() {
   const [connected, setConnected] = useState(false);
@@ -7,15 +39,45 @@ export function useDankaRoom() {
   const [roomCode, setRoomCode] = useState('');
   const [playerId, setPlayerId] = useState('');
   const [error, setError] = useState('');
+  const reconnectingRef = useRef(false);
+
+  function rememberSession(nextRoomCode, nextPlayerId, nextRoom = null) {
+    if (!nextRoomCode || !nextPlayerId) return;
+    const playerName = nextRoom?.players?.find((p) => p.id === nextPlayerId)?.name || '';
+    saveSession({ roomCode: nextRoomCode, playerId: nextPlayerId, playerName });
+  }
+
+  function restoreSavedSession() {
+    const saved = readSavedSession();
+    if (!saved?.roomCode || !saved?.playerId || reconnectingRef.current) return;
+    reconnectingRef.current = true;
+    socket.emit('reconnectRoom', { roomCode: saved.roomCode, playerId: saved.playerId }, (response) => {
+      reconnectingRef.current = false;
+      if (!response?.success) {
+        setError(response?.error || 'Saved game session could not be restored. Please rejoin the room.');
+        clearSavedSession();
+        return;
+      }
+      setError('');
+      setRoomCode(response.roomCode);
+      setPlayerId(response.playerId);
+      setRoom(response.room);
+      rememberSession(response.roomCode, response.playerId, response.room);
+    });
+  }
 
   useEffect(() => {
     connectSocket();
-    const onConnect = () => setConnected(true);
+    const onConnect = () => {
+      setConnected(true);
+      restoreSavedSession();
+    };
     const onDisconnect = () => setConnected(false);
-    const onRoomUpdated = (updatedRoom) => { setError(""); setRoom(updatedRoom); };
+    const onRoomUpdated = (updatedRoom) => { setError(''); setRoom(updatedRoom); };
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('roomUpdated', onRoomUpdated);
+    if (socket.connected) onConnect();
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
@@ -38,6 +100,7 @@ export function useDankaRoom() {
       setRoomCode(response.roomCode);
       setPlayerId(response.playerId);
       setRoom(response.room);
+      rememberSession(response.roomCode, response.playerId, response.room);
     });
   }
 
@@ -48,6 +111,7 @@ export function useDankaRoom() {
       setRoomCode(response.roomCode);
       setPlayerId(response.playerId);
       setRoom(response.room);
+      rememberSession(response.roomCode, response.playerId, response.room);
     });
   }
 
@@ -56,11 +120,12 @@ export function useDankaRoom() {
     setRoom(null);
     setRoomCode('');
     setPlayerId('');
+    clearSavedSession();
   }
 
   function pickPlaceCutCard(deckIndex = null) {
     setError('');
-    socket.emit('pickPlaceCutCard', { roomCode, deckIndex }, (response) => {
+    socket.emit('pickPlaceCutCard', { roomCode, playerId, deckIndex }, (response) => {
       if (!response?.success) return setError(response?.error || 'Unable to pick Place Cut card.');
     });
   }
