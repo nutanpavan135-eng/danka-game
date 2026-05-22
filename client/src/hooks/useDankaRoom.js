@@ -39,6 +39,7 @@ export function useDankaRoom() {
   const [roomCode, setRoomCode] = useState('');
   const [playerId, setPlayerId] = useState('');
   const [error, setError] = useState('');
+  const [isRestoringSession, setIsRestoringSession] = useState(() => !!readSavedSession());
   const reconnectingRef = useRef(false);
 
   function rememberSession(nextRoomCode, nextPlayerId, nextRoom = null) {
@@ -49,10 +50,16 @@ export function useDankaRoom() {
 
   function restoreSavedSession() {
     const saved = readSavedSession();
-    if (!saved?.roomCode || !saved?.playerId || reconnectingRef.current) return;
+    if (!saved?.roomCode || !saved?.playerId) {
+      setIsRestoringSession(false);
+      return;
+    }
+    if (reconnectingRef.current) return;
+    setIsRestoringSession(true);
     reconnectingRef.current = true;
     socket.emit('reconnectRoom', { roomCode: saved.roomCode, playerId: saved.playerId }, (response) => {
       reconnectingRef.current = false;
+      setIsRestoringSession(false);
       if (!response?.success) {
         setError(response?.error || 'Saved game session could not be restored. Please rejoin the room.');
         clearSavedSession();
@@ -94,6 +101,7 @@ export function useDankaRoom() {
   }
 
   function createRoom({ playerName, startingCoins, cyclesPerRound }) {
+    setIsRestoringSession(false);
     setError('');
     socket.emit('createRoom', { playerName, startingCoins, cyclesPerRound }, (response) => {
       if (!response?.success) return setError(response?.error || 'Unable to create room.');
@@ -105,6 +113,7 @@ export function useDankaRoom() {
   }
 
   function joinRoom({ roomCode, playerName }) {
+    setIsRestoringSession(false);
     setError('');
     socket.emit('joinRoom', { roomCode, playerName }, (response) => {
       if (!response?.success) return setError(response?.error || 'Unable to join room.');
@@ -116,6 +125,7 @@ export function useDankaRoom() {
   }
 
   function startNewGame() {
+    setIsRestoringSession(false);
     setError('');
     setRoom(null);
     setRoomCode('');
@@ -131,7 +141,7 @@ export function useDankaRoom() {
   }
 
   return {
-    connected, room, roomCode, playerId, error,
+    connected, room, roomCode, playerId, error, isRestoringSession,
     createRoom, joinRoom, startNewGame,
     startGame: () => emitAction('startGame'),
     pickPlaceCutCard,
