@@ -3845,3 +3845,104 @@ button.danger { background: #fb7185; color: #fff1f2; border-color: #fecdd3; }
     text-overflow: ellipsis !important;
   }
 }
+
+/* Prototype 5.32 — player Home/Leave button and confirmation popup */
+.home-circle-button {
+  min-width: 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  background: linear-gradient(180deg, #e0f2fe, #38bdf8) !important;
+  color: #082f49 !important;
+  border: 1px solid rgba(255,255,255,.72) !important;
+  box-shadow: 0 10px 20px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.45) !important;
+}
+
+.home-circle-button:hover {
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.05);
+}
+
+.leave-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 6, 23, .64);
+  backdrop-filter: blur(7px);
+}
+
+.leave-confirm-card {
+  width: min(92vw, 430px);
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(15,23,42,.96), rgba(12,74,56,.96));
+  border: 1px solid rgba(251,191,36,.45);
+  box-shadow: 0 24px 70px rgba(0,0,0,.56);
+  color: #ecfdf5;
+  text-align: center;
+}
+
+.leave-confirm-card h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.leave-confirm-card p {
+  margin: 0;
+  color: #d1fae5;
+  line-height: 1.45;
+}
+
+.leave-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.leave-confirm-actions button {
+  min-width: 110px;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .home-circle-button {
+    min-width: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 14px !important;
+  }
+
+  .leave-confirm-card {
+    width: min(74vw, 390px);
+    padding: 14px 16px;
+    border-radius: 18px;
+  }
+
+  .leave-confirm-card h2 {
+    font-size: 18px;
+  }
+
+  .leave-confirm-card p {
+    font-size: 12px;
+  }
+
+  .leave-confirm-actions {
+    margin-top: 12px;
+  }
+
+  .leave-confirm-actions button {
+    min-width: 88px;
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
