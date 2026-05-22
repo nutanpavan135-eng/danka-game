@@ -3814,3 +3814,34 @@ button.danger { background: #fb7185; color: #fff1f2; border-color: #fecdd3; }
     font-size: 12px !important;
   }
 }
+
+/* Prototype 5.31 — auto resync status after backend restart */
+.sync-toast {
+  position: fixed;
+  left: 50%;
+  top: 86px;
+  transform: translateX(-50%);
+  z-index: 240;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 13px;
+  color: #022c22;
+  background: linear-gradient(180deg, #bbf7d0, #34d399);
+  border: 1px solid rgba(255,255,255,.76);
+  box-shadow: 0 12px 28px rgba(0,0,0,.32);
+  pointer-events: none;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .sync-toast {
+    top: 35px !important;
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+    max-width: min(58vw, 460px) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
