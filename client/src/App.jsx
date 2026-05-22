@@ -763,12 +763,26 @@ export default function App() {
   const [cutPercent, setCutPercent] = useState(50);
   const [oneCardMode, setOneCardMode] = useState('highest');
   const danka = useDankaRoom();
-  const { connected, room, roomCode, playerId, error, createRoom, joinRoom } = danka;
+  const { connected, room, roomCode, playerId, error, isRestoringSession, createRoom, joinRoom } = danka;
   useDankaSoundEffects(room);
 
   function resetEntry() {
     setEntryMode('choose');
     setJoinCode('');
+  }
+
+
+  if (!room && isRestoringSession) {
+    return (
+      <main className="page reconnect-page">
+        <section className="reconnect-card">
+          <div className="reconnect-loader" aria-hidden="true" />
+          <h1>Reconnecting to your Danka table...</h1>
+          <p>Hold on. We are restoring your room and player seat.</p>
+          <small>{connected ? 'Backend connected' : 'Connecting to backend...'}</small>
+        </section>
+      </main>
+    );
   }
 
   if (!room) {
