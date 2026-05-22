@@ -762,6 +762,7 @@ export default function App() {
   const [cyclesPerRound, setCyclesPerRound] = useState(20);
   const [cutPercent, setCutPercent] = useState(50);
   const [oneCardMode, setOneCardMode] = useState('highest');
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const danka = useDankaRoom();
   const { connected, room, roomCode, playerId, error, isRestoringSession, syncStatus, createRoom, joinRoom } = danka;
   useDankaSoundEffects(room);
@@ -852,6 +853,13 @@ export default function App() {
 
   const me = room.players.find((p) => p.id === playerId);
   const permissions = getPermissions(room, playerId);
+  const showPlayerHomeButton = !!room && !permissions.canEndSession;
+
+  function confirmLeaveToHome() {
+    setLeaveConfirmOpen(false);
+    danka.leaveRoomToHome();
+    setEntryMode('choose');
+  }
 
   return (
     <main className="page game-page">
@@ -863,6 +871,17 @@ export default function App() {
         </div>
         <div className="top-right-controls">
           <RoomCodeBadge code={roomCode} />
+          {showPlayerHomeButton && (
+            <button
+              type="button"
+              className="home-circle-button"
+              title="Leave game and go home"
+              aria-label="Leave game and go home"
+              onClick={() => setLeaveConfirmOpen(true)}
+            >
+              🏠
+            </button>
+          )}
           {permissions.canStartGame && <button onClick={danka.startGame}>Start Game</button>}
           {room.status === 'sessionEnded' && <button onClick={danka.startNewGame}>Start New Game</button>}
           {permissions.canEndSession && <button className="danger" onClick={danka.endSession}>End Session</button>}
@@ -874,6 +893,18 @@ export default function App() {
       <p className="notice compact-notice">{room.lastActionMessage}</p>
       <MobilePortraitNotice />
       <MobileInfoDrawers room={room} />
+      {leaveConfirmOpen && (
+        <div className="leave-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="leave-confirm-title">
+          <section className="leave-confirm-card">
+            <h2 id="leave-confirm-title">Leave current game?</h2>
+            <p>You are about to leave this table and return to the home screen. You will be removed from the current room.</p>
+            <div className="leave-confirm-actions">
+              <button type="button" className="secondary" onClick={() => setLeaveConfirmOpen(false)}>No, stay</button>
+              <button type="button" className="danger" onClick={confirmLeaveToHome}>Yes, leave</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       <section className="game-split game-split-38">
         <div className="table-half">
