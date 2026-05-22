@@ -10,5 +10,8 @@
     "cors": "latest",
     "express": "latest",
     "socket.io": "latest"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
