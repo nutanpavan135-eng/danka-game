@@ -27,7 +27,7 @@ function registerSetupEvents(io, socket) {
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "placeCut") return callback?.({ success: false, error: "Place Cut picking is not available now." });
 
-    const player = room.players.find((p) => p.socketId === socket.id);
+    const player = room.players.find((p) => p.id === playerId);
     if (!player) return callback?.({ success: false, error: "Player not found in room." });
     if (room.placeCutPicks?.some((p) => p.playerId === player.id)) {
       return callback?.({ success: false, error: "You already picked your Place Cut card." });
@@ -63,7 +63,7 @@ function registerSetupEvents(io, socket) {
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "placeCut") return callback?.({ success: false, error: "Place Cut is not available now." });
-    if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can auto-run Place Cut." });
+    if (playerId !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can auto-run Place Cut." });
 
     const deck = shuffleDeck(createDeck());
     room.placeCutPicks = room.players.map((player, index) => ({ playerId: player.id, playerName: player.name, card: deck[index] }));
@@ -86,7 +86,7 @@ function registerSetupEvents(io, socket) {
     const highestPick = room.placeCutOrder?.[0];
     if (!highestPick) return callback?.({ success: false, error: "Place Cut order is missing." });
     const chooser = room.players.find((p) => p.id === highestPick.playerId);
-    if (!chooser || chooser.socketId !== socket.id) {
+    if (!chooser || chooser.id !== playerId) {
       return callback?.({ success: false, error: `Only ${highestPick.playerName} can choose the first seat.` });
     }
 

@@ -60,7 +60,7 @@ function registerAdvancedEvents(io, socket) {
     if (room.status !== "chooseOneCardMode") return callback?.({ success: false, error: "Single-card mode choice is not available now." });
     const chooserIndex = findDealerLeftIndex(room);
     const chooser = room.players[chooserIndex];
-    if (!chooser || chooser.socketId !== socket.id) {
+    if (!chooser || chooser.id !== playerId) {
       return callback?.({ success: false, error: `Only ${chooser?.name || "the dealer's left-side player"} can choose Highest or Lowest for this single-card cycle.` });
     }
     const selectedMode = mode === "lowest" ? "lowest" : "highest";
@@ -83,7 +83,7 @@ function registerAdvancedEvents(io, socket) {
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "roundOver") return callback?.({ success: false, error: "Next round only after round over." });
     const dealer = room.players[room.dealerIndex];
-    if (dealer?.socketId !== socket.id) return callback?.({ success: false, error: `Only ${dealer?.name || "the dealer"} can deal the next cycle.` });
+    if (dealer?.id !== playerId) return callback?.({ success: false, error: `Only ${dealer?.name || "the dealer"} can deal the next cycle.` });
     startNextRoundFromRoundOver(room);
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
@@ -94,7 +94,7 @@ function registerAdvancedEvents(io, socket) {
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Place Cut only at cycle break." });
-    const requester = room.players.find((p) => p.socketId === socket.id);
+    const requester = room.players.find((p) => p.id === playerId);
     if (!requester) return callback?.({ success: false, error: "Player not found." });
     prepareFreshCycle(room, `${requester.name} requested Place Cut. Fresh cycle started.`);
     callback?.({ success: true });
@@ -106,7 +106,7 @@ function registerAdvancedEvents(io, socket) {
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Continue only at cycle break." });
-    if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can continue." });
+    if (playerId !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can continue." });
     prepareFreshCycle(room, "Admin continued with same players. Fresh cycle started.");
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
@@ -117,7 +117,7 @@ function registerAdvancedEvents(io, socket) {
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Players can leave only at cycle break." });
-    const idx = room.players.findIndex((p) => p.socketId === socket.id);
+    const idx = room.players.findIndex((p) => p.id === playerId);
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
     const settlement = calculateSettlement(room.players);
     const [leaving] = room.players.splice(idx, 1);
@@ -138,7 +138,7 @@ function registerAdvancedEvents(io, socket) {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
-    if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can end session." });
+    if (playerId !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can end session." });
     const safeEndStatuses = ["lobby", "cycleBreak", "roundOver"];
     if (!safeEndStatuses.includes(room.status)) {
       return callback?.({ success: false, error: "End Session is available only after the current cycle is finished." });

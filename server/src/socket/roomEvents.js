@@ -59,7 +59,7 @@ function registerRoomEvents(io, socket) {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
-    if (socket.id !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can start." });
+    if (playerId !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can start." });
     if (room.players.length < LIMITS.MIN_PLAYERS) return callback?.({ success: false, error: "At least 2 players required." });
     room.status = "placeCut";
     room.cycleTarget = room.cyclesPerRound || calculateCycleTarget(room.players.length);
@@ -78,7 +78,7 @@ function registerRoomEvents(io, socket) {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
-    const idx = room.players.findIndex((p) => p.socketId === socket.id);
+    const idx = room.players.findIndex((p) => p.id === playerId);
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
     const [leaving] = room.players.splice(idx, 1);
     socket.leave(room.roomCode);
