@@ -763,7 +763,7 @@ export default function App() {
   const [cutPercent, setCutPercent] = useState(50);
   const [oneCardMode, setOneCardMode] = useState('highest');
   const danka = useDankaRoom();
-  const { connected, room, roomCode, playerId, error, isRestoringSession, createRoom, joinRoom } = danka;
+  const { connected, room, roomCode, playerId, error, isRestoringSession, syncStatus, createRoom, joinRoom } = danka;
   useDankaSoundEffects(room);
 
   function resetEntry() {
@@ -870,6 +870,7 @@ export default function App() {
       </header>
 
       {error && <p className="error">{error}</p>}
+      {syncStatus && <p className="sync-toast">{syncStatus}</p>}
       <p className="notice compact-notice">{room.lastActionMessage}</p>
       <MobilePortraitNotice />
       <MobileInfoDrawers room={room} />
