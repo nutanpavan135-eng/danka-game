@@ -35,6 +35,26 @@ function registerRoomEvents(io, socket) {
     broadcastPrivateRoomState(io, room);
   });
 
+
+
+  socket.on("reconnectRoom", ({ roomCode, playerId }, callback) => {
+    const safeRoomCode = String(roomCode || "").trim();
+    const room = rooms.get(safeRoomCode);
+    if (!room) {
+      return callback?.({ success: false, error: "Saved room was not found. It may have expired after a server restart. Please create or join a new room." });
+    }
+
+    const player = room.players.find((p) => p.id === playerId);
+    if (!player) {
+      return callback?.({ success: false, error: "Saved player was not found in this room. Please rejoin with your name." });
+    }
+
+    attachSocketToPlayer(room, socket, player.id);
+    room.lastActionMessage = `${player.name} reconnected to the game.`;
+    callback?.({ success: true, roomCode: room.roomCode, playerId: player.id, room: getRoomStateForPlayer(room, player.id) });
+    broadcastPrivateRoomState(io, room);
+  });
+
   socket.on("startGame", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
