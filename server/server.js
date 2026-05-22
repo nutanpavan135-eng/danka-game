@@ -3,7 +3,7 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const { PORT, CLIENT_ORIGIN } = require("./src/config/serverConfig");
-const { rooms, loadRooms, saveRooms, getStoreMode, getStoreDetails } = require("./src/rooms/roomStore");
+const { rooms, loadRooms, saveRooms, cleanupExpiredRooms, touchRoom, getStoreMode, getStoreDetails } = require("./src/rooms/roomStore");
 const { broadcastPrivateRoomState } = require("./src/rooms/roomState");
 const { registerRoomEvents } = require("./src/socket/roomEvents");
 const { registerSetupEvents } = require("./src/socket/setupEvents");
@@ -17,10 +17,10 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: CLIENT_ORIGIN === "*" ? true : CLIENT_ORIGIN, methods: ["GET", "POST"] } });
 
-app.get("/", (req, res) => res.send("Danka backend server is running — Prototype 5.30 Redis/Key Value persistence ready"));
+app.get("/", (req, res) => res.send("Danka backend server is running — Prototype 5.32 room cleanup and player home ready"));
 app.get("/health", (req, res) => res.json({
   status: "ok",
-  prototype: "5.30-redis-key-value-persistence",
+  prototype: "5.32-room-cleanup-player-home",
   activeRooms: rooms.size,
   roomStore: getStoreMode(),
   roomStoreDetails: getStoreDetails(),
@@ -52,6 +52,7 @@ io.on("connection", (socket) => {
     player.connected = false;
     player.status = "Disconnected";
     room.lastActionMessage = `${player.name} disconnected.`;
+    touchRoom(room, "disconnect");
     saveRooms();
     broadcastPrivateRoomState(io, room);
   });
@@ -59,6 +60,11 @@ io.on("connection", (socket) => {
 
 async function startServer() {
   await loadRooms();
+  cleanupExpiredRooms();
+  setInterval(() => {
+    const expired = cleanupExpiredRooms();
+    if (expired.length) console.log(`Danka room cleanup removed ${expired.length} expired room(s).`);
+  }, 15 * 60 * 1000).unref?.();
   server.listen(PORT, () => console.log(`Danka backend running on http://localhost:${PORT} with ${getStoreMode()}`));
 }
 
