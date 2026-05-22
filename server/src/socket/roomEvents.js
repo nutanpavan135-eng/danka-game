@@ -1,4 +1,4 @@
-const { rooms } = require("../rooms/roomStore");
+const { rooms, deleteRoom } = require("../rooms/roomStore");
 const { generateRoomCode, createPlayer, createRoom } = require("../rooms/roomFactory");
 const { getRoomStateForPlayer, broadcastPrivateRoomState } = require("../rooms/roomState");
 const { calculateCycleTarget, attachSocketToPlayer } = require("../rooms/roomHelpers");
@@ -82,7 +82,7 @@ function registerRoomEvents(io, socket) {
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
     const [leaving] = room.players.splice(idx, 1);
     socket.leave(room.roomCode);
-    if (room.players.length === 0) { rooms.delete(room.roomCode); return callback?.({ success: true }); }
+    if (room.players.length === 0) { deleteRoom(room.roomCode); return callback?.({ success: true }); }
     if (leaving.id === room.adminPlayerId) { room.adminPlayerId = room.players[0].id; room.players[0].role = "admin"; }
     room.lastActionMessage = `${leaving.name} left the room.`;
     callback?.({ success: true });
