@@ -19,8 +19,8 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: CLIENT_ORIGIN === "*" ? true : CLIENT_ORIGIN, methods: ["GET", "POST"] } });
 
-app.get("/", (req, res) => res.send("Danka backend server is running — Prototype 5.13 friend-test fixes"));
-app.get("/health", (req, res) => res.json({ status: "ok", prototype: "5.13-friend-test-fixes", activeRooms: rooms.size }));
+app.get("/", (req, res) => res.send("Danka backend server is running — Prototype 5.26 refresh reconnect protection"));
+app.get("/health", (req, res) => res.json({ status: "ok", prototype: "5.26-refresh-reconnect-protection", activeRooms: rooms.size }));
 
 function findPlayerRoom(socketId) {
   for (const room of rooms.values()) {
