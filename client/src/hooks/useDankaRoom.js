@@ -190,6 +190,34 @@ export function useDankaRoom() {
     clearSavedSession();
   }
 
+  function leaveRoomToHome() {
+    const activeRoomCode = roomCodeRef.current || roomCode;
+    const activePlayerId = playerIdRef.current || playerId;
+    setError('');
+    setSyncStatus('');
+
+    function goHome() {
+      setIsRestoringSession(false);
+      setRoom(null);
+      setRoomCode('');
+      setPlayerId('');
+      clearSavedSession();
+    }
+
+    if (!activeRoomCode || !activePlayerId || !socket.connected) {
+      goHome();
+      return;
+    }
+
+    socket.emit('leaveRoom', { roomCode: activeRoomCode, playerId: activePlayerId }, (response) => {
+      if (!response?.success) {
+        setError(response?.error || 'Unable to leave the room.');
+        return;
+      }
+      goHome();
+    });
+  }
+
   function pickPlaceCutCard(deckIndex = null) {
     setError('');
     socket.emit('pickPlaceCutCard', { roomCode, playerId, deckIndex }, (response) => {
@@ -199,7 +227,7 @@ export function useDankaRoom() {
 
   return {
     connected, room, roomCode, playerId, error, isRestoringSession, syncStatus,
-    createRoom, joinRoom, startNewGame,
+    createRoom, joinRoom, startNewGame, leaveRoomToHome,
     startGame: () => emitAction('startGame'),
     pickPlaceCutCard,
     runPlaceCut: () => emitAction('runPlaceCut'),
