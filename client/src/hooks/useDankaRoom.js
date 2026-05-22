@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { socket, connectSocket } from '../socket';
 
 const SESSION_KEY = 'danka.prototype526.session';
+const RESYNC_INTERVAL_MS = 6000;
 
 function readSavedSession() {
   try {
@@ -40,7 +41,16 @@ export function useDankaRoom() {
   const [playerId, setPlayerId] = useState('');
   const [error, setError] = useState('');
   const [isRestoringSession, setIsRestoringSession] = useState(() => !!readSavedSession());
+  const [syncStatus, setSyncStatus] = useState('');
   const reconnectingRef = useRef(false);
+  const syncingRef = useRef(false);
+  const roomCodeRef = useRef('');
+  const playerIdRef = useRef('');
+  const roomRef = useRef(null);
+
+  useEffect(() => { roomCodeRef.current = roomCode; }, [roomCode]);
+  useEffect(() => { playerIdRef.current = playerId; }, [playerId]);
+  useEffect(() => { roomRef.current = room; }, [room]);
 
   function rememberSession(nextRoomCode, nextPlayerId, nextRoom = null) {
     if (!nextRoomCode || !nextPlayerId) return;
@@ -48,13 +58,25 @@ export function useDankaRoom() {
     saveSession({ roomCode: nextRoomCode, playerId: nextPlayerId, playerName });
   }
 
-  function restoreSavedSession() {
+  function applyRoomSession(response, message = '') {
+    setError('');
+    setRoomCode(response.roomCode);
+    setPlayerId(response.playerId);
+    setRoom(response.room);
+    rememberSession(response.roomCode, response.playerId, response.room);
+    if (message) {
+      setSyncStatus(message);
+      window.setTimeout(() => setSyncStatus(''), 2200);
+    }
+  }
+
+  function restoreSavedSession(options = {}) {
     const saved = readSavedSession();
     if (!saved?.roomCode || !saved?.playerId) {
       setIsRestoringSession(false);
       return;
     }
-    if (reconnectingRef.current) return;
+    if (reconnectingRef.current || !socket.connected) return;
     setIsRestoringSession(true);
     reconnectingRef.current = true;
     socket.emit('reconnectRoom', { roomCode: saved.roomCode, playerId: saved.playerId }, (response) => {
@@ -65,11 +87,24 @@ export function useDankaRoom() {
         clearSavedSession();
         return;
       }
-      setError('');
-      setRoomCode(response.roomCode);
-      setPlayerId(response.playerId);
-      setRoom(response.room);
-      rememberSession(response.roomCode, response.playerId, response.room);
+      applyRoomSession(response, options.showMessage ? 'Reconnected and synced.' : '');
+    });
+  }
+
+  function syncCurrentRoom(options = {}) {
+    const saved = readSavedSession();
+    const activeRoomCode = roomCodeRef.current || saved?.roomCode;
+    const activePlayerId = playerIdRef.current || saved?.playerId;
+    if (!activeRoomCode || !activePlayerId || !socket.connected || syncingRef.current || reconnectingRef.current) return;
+
+    syncingRef.current = true;
+    socket.emit('syncRoom', { roomCode: activeRoomCode, playerId: activePlayerId }, (response) => {
+      syncingRef.current = false;
+      if (!response?.success) {
+        if (options.showErrors) setError(response?.error || 'Unable to sync the game room.');
+        return;
+      }
+      applyRoomSession(response, options.showMessage ? 'Reconnected and synced.' : '');
     });
   }
 
@@ -77,18 +112,39 @@ export function useDankaRoom() {
     connectSocket();
     const onConnect = () => {
       setConnected(true);
-      restoreSavedSession();
+      const hasActiveSession = !!(roomCodeRef.current || readSavedSession()?.roomCode);
+      if (hasActiveSession && roomRef.current) syncCurrentRoom({ showMessage: true });
+      else restoreSavedSession({ showMessage: true });
     };
-    const onDisconnect = () => setConnected(false);
+    const onDisconnect = () => {
+      setConnected(false);
+      if (roomRef.current) setSyncStatus('Connection lost. Reconnecting...');
+    };
     const onRoomUpdated = (updatedRoom) => { setError(''); setRoom(updatedRoom); };
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('roomUpdated', onRoomUpdated);
     if (socket.connected) onConnect();
+
+    const onFocus = () => syncCurrentRoom({ showMessage: false });
+    const onVisibilityChange = () => {
+      if (!document.hidden) syncCurrentRoom({ showMessage: false });
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden && (roomRef.current || readSavedSession())) syncCurrentRoom({ showMessage: false });
+    }, RESYNC_INTERVAL_MS);
+
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('roomUpdated', onRoomUpdated);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -127,6 +183,7 @@ export function useDankaRoom() {
   function startNewGame() {
     setIsRestoringSession(false);
     setError('');
+    setSyncStatus('');
     setRoom(null);
     setRoomCode('');
     setPlayerId('');
@@ -141,7 +198,7 @@ export function useDankaRoom() {
   }
 
   return {
-    connected, room, roomCode, playerId, error, isRestoringSession,
+    connected, room, roomCode, playerId, error, isRestoringSession, syncStatus,
     createRoom, joinRoom, startNewGame,
     startGame: () => emitAction('startGame'),
     pickPlaceCutCard,
