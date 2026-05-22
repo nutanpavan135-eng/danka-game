@@ -6,7 +6,9 @@ const STORE_PREFIX = process.env.DANKA_ROOM_STORE_PREFIX || "danka:rooms:v2";
 const STORE_INDEX_KEY = `${STORE_PREFIX}:index`;
 const REDIS_REST_URL = process.env.DANKA_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL || "";
 const REDIS_REST_TOKEN = process.env.DANKA_REDIS_REST_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
-const STORE_TTL_SECONDS = Number(process.env.DANKA_ROOM_STORE_TTL_SECONDS || 86400);
+const STORE_TTL_SECONDS = Number(process.env.DANKA_ROOM_STORE_TTL_SECONDS || 43200);
+const ROOM_EXPIRE_MS = Math.max(60_000, STORE_TTL_SECONDS * 1000);
+let lastCleanupAt = null;
 
 const rooms = new Map();
 
@@ -24,6 +26,8 @@ function getStoreDetails() {
     redisConfigured: hasRedisStore(),
     redisKeyPrefix: STORE_PREFIX,
     ttlSeconds: Number.isFinite(STORE_TTL_SECONDS) && STORE_TTL_SECONDS > 0 ? Math.floor(STORE_TTL_SECONDS) : null,
+    inactiveRoomExpiryHours: Math.round((ROOM_EXPIRE_MS / 3600000) * 10) / 10,
+    lastCleanupAt,
     localFallbackPath: STORE_PATH,
   };
 }
@@ -31,6 +35,39 @@ function getStoreDetails() {
 function roomKey(roomCode) {
   return `${STORE_PREFIX}:room:${String(roomCode || "").trim()}`;
 }
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function touchRoom(room, reason = "activity") {
+  if (!room) return room;
+  const ts = nowIso();
+  room.updatedAt = ts;
+  room.lastSavedAt = ts;
+  room.lastActivityReason = reason;
+  if (!room.createdAt) room.createdAt = ts;
+  return room;
+}
+
+function isRoomExpired(room, nowMs = Date.now()) {
+  if (!room) return true;
+  if (room.status === "sessionEnded") return true;
+  const raw = room.updatedAt || room.lastSavedAt || room.createdAt;
+  if (!raw) return false;
+  const last = new Date(raw).getTime();
+  if (!Number.isFinite(last)) return false;
+  return nowMs - last > ROOM_EXPIRE_MS;
+}
+
+async function deleteRoomFromRedis(roomCode) {
+  const safeRoomCode = String(roomCode || "").trim();
+  if (!hasRedisStore() || !safeRoomCode) return;
+  await Promise.all([
+    redisCommand(["DEL", roomKey(safeRoomCode)]),
+    redisCommand(["SREM", STORE_INDEX_KEY, safeRoomCode]),
+  ]);
+}
+
 
 function serializeRooms() {
   return JSON.stringify([...rooms.entries()]);
@@ -107,6 +144,11 @@ async function saveRoomsToRedis() {
 }
 
 function saveRooms() {
+  const nowMs = Date.now();
+  for (const [code, room] of rooms.entries()) {
+    if (isRoomExpired(room, nowMs)) rooms.delete(code);
+  }
+
   const payload = serializeRooms();
 
   // Always keep a local fallback copy for same-instance restarts.
@@ -142,7 +184,11 @@ async function loadRoomsFromRedis() {
 
     try {
       const room = JSON.parse(result.result);
-      if (room?.roomCode) rooms.set(room.roomCode, room);
+      if (isRoomExpired(room)) {
+        staleCodes.push(code);
+      } else if (room?.roomCode) {
+        rooms.set(room.roomCode, room);
+      }
     } catch (err) {
       staleCodes.push(code);
       console.warn(`Unable to parse Redis room ${code}:`, err.message);
@@ -173,16 +219,36 @@ async function loadRooms() {
 function deleteRoom(roomCode) {
   const safeRoomCode = String(roomCode || "").trim();
   rooms.delete(safeRoomCode);
-  saveRooms();
+  saveRooms("delete-room");
 
-  if (hasRedisStore() && safeRoomCode) {
-    Promise.all([
-      redisCommand(["DEL", roomKey(safeRoomCode)]),
-      redisCommand(["SREM", STORE_INDEX_KEY, safeRoomCode]),
-    ]).catch((err) => {
-      console.warn("Unable to delete Danka room from Redis store:", err.message);
-    });
+  deleteRoomFromRedis(safeRoomCode).catch((err) => {
+    console.warn("Unable to delete Danka room from Redis store:", err.message);
+  });
+}
+
+function cleanupExpiredRooms() {
+  const nowMs = Date.now();
+  const expiredCodes = [];
+
+  for (const [code, room] of rooms.entries()) {
+    if (isRoomExpired(room, nowMs)) {
+      expiredCodes.push(code);
+      rooms.delete(code);
+    }
   }
+
+  if (expiredCodes.length) {
+    console.log(`Cleaned ${expiredCodes.length} expired Danka room(s): ${expiredCodes.join(", ")}`);
+    saveRoomsToFile(serializeRooms());
+    if (hasRedisStore()) {
+      Promise.all(expiredCodes.map((code) => deleteRoomFromRedis(code))).catch((err) => {
+        console.warn("Unable to clean expired Danka rooms from Redis:", err.message);
+      });
+    }
+  }
+
+  lastCleanupAt = nowIso();
+  return expiredCodes;
 }
 
 module.exports = {
@@ -190,6 +256,9 @@ module.exports = {
   saveRooms,
   loadRooms,
   deleteRoom,
+  cleanupExpiredRooms,
+  touchRoom,
+  isRoomExpired,
   getStoreMode,
   getStoreDetails,
 };

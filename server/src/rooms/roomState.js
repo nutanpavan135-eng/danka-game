@@ -1,4 +1,4 @@
-const { saveRooms } = require("./roomStore");
+const { saveRooms, touchRoom } = require("./roomStore");
 function getRoomStateForPlayer(room, receivingPlayerId) {
   const allPlaceCutPicked = room.placeCutPicks?.length === room.players.length && room.players.length > 0;
   const placeCutPicks = (room.placeCutPicks || []).map((pick) => ({
@@ -70,6 +70,7 @@ function getRoomStateForPlayer(room, receivingPlayerId) {
 }
 
 function broadcastPrivateRoomState(io, room) {
+  touchRoom(room, "broadcast-update");
   saveRooms();
   for (const player of room.players) {
     io.to(player.socketId).emit("roomUpdated", getRoomStateForPlayer(room, player.id));
