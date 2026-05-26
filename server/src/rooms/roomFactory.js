@@ -28,10 +28,12 @@ function createRoom({ roomCode, adminPlayer, startingCoins, cyclesPerRound }) {
   return {
     roomCode,
     adminPlayerId: adminPlayer.id,
+    coAdminPlayerId: null,
     status: "lobby",
     startingCoins,
     cyclesPerRound: Number(cyclesPerRound) > 0 ? Number(cyclesPerRound) : 20,
     players: [adminPlayer],
+    removedPlayers: [],
     deck: [],
     pot: 0,
     dealerIndex: 0,

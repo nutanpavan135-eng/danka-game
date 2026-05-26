@@ -7,7 +7,8 @@ const { LIMITS } = require("../../../shared/ruleConstants");
 
 function registerRoomEvents(io, socket) {
   socket.on("createRoom", ({ playerName, startingCoins, cyclesPerRound }, callback) => {
-    const safeCoins = Number(startingCoins) > 0 ? Number(startingCoins) : 100;
+    const rawCoins = Number(startingCoins);
+    const safeCoins = Number.isFinite(rawCoins) ? Math.floor(rawCoins) : 0;
     const rawCycles = Number(cyclesPerRound);
     const safeCyclesPerRound = Number.isFinite(rawCycles) && rawCycles > 0 ? Math.max(1, Math.min(Math.floor(rawCycles), 50)) : 20;
     const roomCode = generateRoomCode();
@@ -28,6 +29,10 @@ function registerRoomEvents(io, socket) {
       return callback?.({ success: false, error: "Name already exists in this room." });
     }
     const player = createPlayer({ socketId: socket.id, name: playerName, isAdmin: false, startingCoins: room.startingCoins });
+    if (!room.coAdminPlayerId && room.players.length >= 1) {
+      room.coAdminPlayerId = player.id;
+      player.role = "co-admin";
+    }
     room.players.push(player);
     room.lastActionMessage = `${player.name} joined the room.`;
     socket.join(room.roomCode);
@@ -115,8 +120,20 @@ function registerRoomEvents(io, socket) {
     }
 
     if (leaving.id === room.adminPlayerId) {
-      room.adminPlayerId = room.players[0].id;
-      room.players[0].role = "admin";
+      const nextAdmin = room.players.find((p) => p.id === room.coAdminPlayerId) || room.players[0];
+      room.adminPlayerId = nextAdmin.id;
+      room.coAdminPlayerId = room.players.find((p) => p.id !== nextAdmin.id)?.id || null;
+      room.players = room.players.map((p, i) => ({
+        ...p,
+        role: p.id === room.adminPlayerId ? "admin" : p.id === room.coAdminPlayerId ? "co-admin" : "player",
+      }));
+    } else if (leaving.id === room.coAdminPlayerId) {
+      const nextCoAdmin = room.players.find((p) => p.id !== room.adminPlayerId) || null;
+      room.coAdminPlayerId = nextCoAdmin?.id || null;
+      room.players = room.players.map((p) => ({
+        ...p,
+        role: p.id === room.adminPlayerId ? "admin" : p.id === room.coAdminPlayerId ? "co-admin" : "player",
+      }));
     }
 
     room.dealerIndex = Math.max(0, Math.min(room.dealerIndex || 0, room.players.length - 1));

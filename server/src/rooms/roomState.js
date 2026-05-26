@@ -11,9 +11,11 @@ function getRoomStateForPlayer(room, receivingPlayerId) {
   return {
     roomCode: room.roomCode,
     adminPlayerId: room.adminPlayerId,
+    coAdminPlayerId: room.coAdminPlayerId || null,
     status: room.status,
     startingCoins: room.startingCoins,
     cyclesPerRound: room.cyclesPerRound,
+    removedPlayers: (room.removedPlayers || []).map((p) => ({ id: p.id, name: p.name, role: p.role || "removed", coins: p.coins, startCoins: p.startCoins, status: p.status || "Removed" })),
     players: room.players.map((p) => {
       const sideRevealActive =
         room.sideReveal?.viewerIds?.includes(receivingPlayerId) &&

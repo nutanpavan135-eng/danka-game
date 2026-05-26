@@ -11,7 +11,111 @@ function compareSideHands(requesterCards, opponentCards, roundType, oneCardMode)
   return compareScores(requesterHand, opponentHand);
 }
 
+
+function isRoomManager(room, playerId) {
+  return !!playerId && (playerId === room.adminPlayerId || playerId === room.coAdminPlayerId || room.players.find((p) => p.id === playerId)?.role === "admin" || room.players.find((p) => p.id === playerId)?.role === "co-admin");
+}
+
+function normalizeRoomManagers(room) {
+  if (!room.players.length) {
+    room.adminPlayerId = null;
+    room.coAdminPlayerId = null;
+    return;
+  }
+  let admin = room.players.find((p) => p.id === room.adminPlayerId);
+  if (!admin) {
+    admin = room.players.find((p) => p.id === room.coAdminPlayerId) || room.players[0];
+    room.adminPlayerId = admin.id;
+  }
+  let coAdmin = room.players.find((p) => p.id === room.coAdminPlayerId && p.id !== room.adminPlayerId);
+  if (!coAdmin) {
+    coAdmin = room.players.find((p) => p.id !== room.adminPlayerId) || null;
+    room.coAdminPlayerId = coAdmin?.id || null;
+  }
+  room.players = room.players.map((p) => ({
+    ...p,
+    role: p.id === room.adminPlayerId ? "admin" : p.id === room.coAdminPlayerId ? "co-admin" : "player",
+  }));
+}
+
+function removePlayerReferences(room, removedId) {
+  room.placeCutPicks = (room.placeCutPicks || []).filter((p) => p.playerId !== removedId);
+  room.placeCutOrder = (room.placeCutOrder || []).filter((p) => p.playerId !== removedId);
+  if (room.sideReveal) {
+    room.sideReveal.viewerIds = (room.sideReveal.viewerIds || []).filter((id) => id !== removedId);
+    room.sideReveal.participantIds = (room.sideReveal.participantIds || []).filter((id) => id !== removedId);
+  }
+}
+
+function emergencyRemovePlayerFromRoom(room, targetPlayerId, managerName) {
+  const targetIndex = room.players.findIndex((p) => p.id === targetPlayerId);
+  if (targetIndex === -1) return { success: false, error: "Player not found." };
+  const target = room.players[targetIndex];
+  const targetWasCurrentTurn = room.players[room.turnIndex]?.id === target.id;
+
+  if (!room.removedPlayers) room.removedPlayers = [];
+  const removedSnapshot = {
+    ...target,
+    status: room.status === "betting" && !target.folded ? "Removed by Admin (counted as Drop)" : "Removed by Admin",
+    removedAt: Date.now(),
+    removedBy: managerName,
+  };
+
+  if (room.status === "betting" && !target.folded) {
+    target.folded = true;
+    target.status = "Dropped by Admin";
+    const remaining = getActivePlayers(room);
+    if (remaining.length === 1) {
+      completeRound(room, remaining[0], `${target.name} was removed by ${managerName} and counted as dropped.`);
+    } else if (targetWasCurrentTurn) {
+      room.turnIndex = nextActiveIndex(room, targetIndex);
+    }
+  }
+
+  room.removedPlayers.push(removedSnapshot);
+  removePlayerReferences(room, target.id);
+
+  const currentDealerId = room.players[room.dealerIndex]?.id;
+  const currentTurnId = room.players[room.turnIndex]?.id;
+  room.players.splice(targetIndex, 1);
+
+  normalizeRoomManagers(room);
+  room.seatCount = room.players.length;
+
+  const dealerIndex = room.players.findIndex((p) => p.id === currentDealerId);
+  room.dealerIndex = dealerIndex >= 0 ? dealerIndex : Math.max(0, Math.min(room.dealerIndex || 0, room.players.length - 1));
+  const turnIndex = room.players.findIndex((p) => p.id === currentTurnId && !p.folded);
+  room.turnIndex = turnIndex >= 0 ? turnIndex : Math.max(0, Math.min(room.turnIndex || 0, room.players.length - 1));
+  if (room.status === "betting" && room.players.length > 0 && room.players[room.turnIndex]?.folded) {
+    room.turnIndex = nextActiveIndex(room, room.turnIndex);
+  }
+
+  if (room.players.length < 2 && room.status !== "sessionEnded") {
+    room.status = "sessionEnded";
+    room.settlement = calculateSettlement([...(room.players || []), ...(room.removedPlayers || [])]);
+    room.lastActionMessage = `${target.name} was removed by ${managerName}. Session ended because fewer than two players remain.`;
+  } else if (room.status !== "sessionEnded") {
+    const suffix = room.status === "betting" ? " If they were active in this cycle, their hand was counted as dropped." : "";
+    room.lastActionMessage = `${target.name} was removed by ${managerName}.${suffix}`;
+  }
+
+  return { success: true, removed: removedSnapshot };
+}
+
 function registerAdvancedEvents(io, socket) {
+  socket.on("emergencyRemovePlayer", ({ roomCode, playerId, targetPlayerId }, callback) => {
+    const room = rooms.get(String(roomCode || "").trim());
+    if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
+    attachSocketToPlayer(room, socket, playerId);
+    if (!isRoomManager(room, playerId)) return callback?.({ success: false, error: "Only admin or co-admin can remove a stuck player." });
+    if (!targetPlayerId || targetPlayerId === playerId) return callback?.({ success: false, error: "Select another player to remove." });
+    const manager = room.players.find((p) => p.id === playerId);
+    const result = emergencyRemovePlayerFromRoom(room, targetPlayerId, manager?.name || "admin");
+    if (!result.success) return callback?.(result);
+    callback?.({ success: true });
+    broadcastPrivateRoomState(io, room);
+  });
+
   socket.on("askSide", ({ roomCode, playerId }, callback) => {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
@@ -106,7 +210,7 @@ function registerAdvancedEvents(io, socket) {
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Continue only at cycle break." });
-    if (playerId !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can continue." });
+    if (!isRoomManager(room, playerId)) return callback?.({ success: false, error: "Only admin or co-admin can continue." });
     prepareFreshCycle(room, "Admin continued with same players. Fresh cycle started.");
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
@@ -119,14 +223,14 @@ function registerAdvancedEvents(io, socket) {
     if (room.status !== "cycleBreak") return callback?.({ success: false, error: "Players can leave only at cycle break." });
     const idx = room.players.findIndex((p) => p.id === playerId);
     if (idx === -1) return callback?.({ success: false, error: "Player not found." });
-    const settlement = calculateSettlement(room.players);
+    const settlement = calculateSettlement([...(room.players || []), ...(room.removedPlayers || [])]);
     const [leaving] = room.players.splice(idx, 1);
     if (room.players.length < 2) {
       room.status = "sessionEnded";
       room.settlement = settlement;
       room.lastActionMessage = `${leaving.name} left. Not enough players remain, so session ended.`;
     } else {
-      if (leaving.id === room.adminPlayerId) { room.adminPlayerId = room.players[0].id; room.players[0].role = "admin"; }
+      if (leaving.id === room.adminPlayerId || leaving.id === room.coAdminPlayerId) normalizeRoomManagers(room);
       room.settlement = settlement;
       prepareFreshCycle(room, `${leaving.name} left at cycle break. Settlement generated. Remaining players start fresh cycle.`);
     }
@@ -138,13 +242,13 @@ function registerAdvancedEvents(io, socket) {
     const room = rooms.get(String(roomCode || "").trim());
     if (!room) return callback?.({ success: false, error: "Room not found. The server may have restarted and this room expired. Please create a new room." });
     attachSocketToPlayer(room, socket, playerId);
-    if (playerId !== room.adminPlayerId) return callback?.({ success: false, error: "Only admin can end session." });
+    if (!isRoomManager(room, playerId)) return callback?.({ success: false, error: "Only admin or co-admin can end session." });
     const safeEndStatuses = ["lobby", "cycleBreak", "roundOver"];
     if (!safeEndStatuses.includes(room.status)) {
       return callback?.({ success: false, error: "End Session is available only after the current cycle is finished." });
     }
     room.status = "sessionEnded";
-    room.settlement = calculateSettlement(room.players);
+    room.settlement = calculateSettlement([...(room.players || []), ...(room.removedPlayers || [])]);
     room.lastActionMessage = "Session ended. Final settlement generated.";
     callback?.({ success: true, settlement: room.settlement });
     broadcastPrivateRoomState(io, room);
