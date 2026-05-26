@@ -5289,3 +5289,291 @@ body {
     height: clamp(40px, 4.4vw, 58px) !important;
   }
 }
+
+/* Prototype 7.3 emergency recovery controls */
+.player-seat.disconnected-player {
+  border-color: rgba(255, 214, 102, 0.75);
+  box-shadow: 0 0 0 1px rgba(255, 214, 102, 0.25), 0 0 22px rgba(255, 214, 102, 0.12);
+}
+.player-seat-head {
+  gap: 8px;
+}
+.disconnect-warning {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 214, 102, 0.16);
+  border: 1px solid rgba(255, 214, 102, 0.38);
+  color: #ffe28a;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+.emergency-remove-button {
+  margin-top: 10px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 120, 120, 0.55);
+  background: linear-gradient(135deg, #a31522, #ef4444);
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.18);
+}
+.emergency-remove-button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+/* Prototype 7.3 mobile admin hotfix — show emergency remove in mobile drawer and restore clear active-player glow. */
+.mobile-emergency-remove-button {
+  margin-top: 6px !important;
+  align-self: flex-start !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  padding: 6px 10px !important;
+  background: linear-gradient(180deg, #ef4444, #b91c1c) !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  font-size: 11px !important;
+  box-shadow: 0 8px 18px rgba(239,68,68,.26) !important;
+}
+
+.perspective-seat.active-player-seat,
+.perspective-seat.my-seat.active-player-seat {
+  z-index: 180 !important;
+  border: 3px solid #fde047 !important;
+  animation: prototype73ActiveSeatGlow 1.05s ease-in-out infinite !important;
+  will-change: filter, box-shadow !important;
+}
+
+.mobile-player-card.turn {
+  outline: 2px solid #fde047 !important;
+  border-color: rgba(253,224,71,.9) !important;
+  animation: prototype73MobilePlayerGlow 1.05s ease-in-out infinite !important;
+}
+
+@keyframes prototype73ActiveSeatGlow {
+  0%, 100% {
+    filter: brightness(1.06) saturate(1.04) !important;
+    box-shadow: 0 0 0 2px rgba(253,224,71,.22), 0 0 20px rgba(253,224,71,.34), 0 16px 32px rgba(0,0,0,.36) !important;
+  }
+  50% {
+    filter: brightness(1.35) saturate(1.22) !important;
+    box-shadow: 0 0 0 5px rgba(253,224,71,.36), 0 0 38px rgba(253,224,71,.62), 0 18px 38px rgba(0,0,0,.42) !important;
+  }
+}
+
+@keyframes prototype73MobilePlayerGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(253,224,71,.18), 0 8px 18px rgba(0,0,0,.20) !important; }
+  50% { box-shadow: 0 0 0 4px rgba(253,224,71,.32), 0 0 24px rgba(253,224,71,.44), 0 10px 22px rgba(0,0,0,.24) !important; }
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .perspective-seat.active-player-seat,
+  .perspective-seat.my-seat.active-player-seat {
+    border-width: 2px !important;
+    box-shadow: 0 0 0 2px rgba(253,224,71,.28), 0 0 22px rgba(253,224,71,.55) !important;
+  }
+
+  .mobile-player-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+
+/* Prototype 7.4 mobile/popup clarity hotfix
+   - Center popups must always sit above the pot badge.
+   - Mobile drawer must cover top controls/banners cleanly.
+   - Mobile keeps only the active instruction banner on the table; latest action log moves inside the Players drawer.
+*/
+.table-popup-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 260 !important;
+  pointer-events: none !important;
+}
+
+.table-popup-layer .one-card-popup,
+.table-popup-layer .winner-pop-popup,
+.table-popup-layer .well-cut-popup {
+  z-index: 265 !important;
+}
+
+.perspective-stage > .real-pot.casino-pot,
+.real-pot.casino-pot {
+  z-index: 170 !important;
+}
+
+.mobile-game-log-card {
+  display: none;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  /* The old long action log should not consume/overlap the mobile table.
+     It is shown inside the right-side Players drawer instead. */
+  .compact-notice {
+    display: none !important;
+  }
+
+  .mobile-drawer-backdrop {
+    z-index: 230 !important;
+  }
+
+  .mobile-slide-panel {
+    z-index: 260 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    max-height: 100vh !important;
+  }
+
+  .mobile-edge-tab {
+    z-index: 270 !important;
+  }
+
+  .mobile-panel-head {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 3 !important;
+    padding: 2px 0 8px !important;
+    margin-bottom: 8px !important;
+    background: linear-gradient(180deg, rgba(4,47,35,.98), rgba(4,47,35,.90)) !important;
+  }
+
+  .mobile-panel-head button {
+    flex: 0 0 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    display: grid !important;
+    place-items: center !important;
+  }
+
+  .mobile-game-log-card {
+    display: block !important;
+    margin: 0 0 8px !important;
+    padding: 8px 9px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(251,191,36,.38) !important;
+    background: rgba(2, 6, 23, .42) !important;
+    color: #f8fafc !important;
+  }
+
+  .mobile-game-log-card b {
+    display: block !important;
+    margin-bottom: 3px !important;
+    color: #fde68a !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: .04em !important;
+  }
+
+  .mobile-game-log-card p {
+    margin: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+    color: #e5e7eb !important;
+  }
+
+  .table-popup-layer {
+    z-index: 285 !important;
+  }
+
+  .table-popup-layer .one-card-popup,
+  .table-popup-layer .winner-pop-popup,
+  .table-popup-layer .well-cut-popup {
+    z-index: 290 !important;
+  }
+}
+
+/* Prototype 7.5 — mobile top instruction alignment and heartbeat active-player pulse.
+   - Current instruction banner moves into the top mobile header space, aligned with Danka Table / Room / End Session.
+   - Active player profile gets the older heartbeat-style zoom + glow pulse without showing the TURN badge.
+*/
+.perspective-seat.active-player-seat,
+.perspective-seat.my-seat.active-player-seat {
+  animation: prototype75SeatHeartbeat 1.05s ease-in-out infinite !important;
+  transform-origin: center center !important;
+  will-change: transform, filter, box-shadow !important;
+}
+
+@keyframes prototype75SeatHeartbeat {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(var(--seat-scale, 1));
+    filter: brightness(1.06) saturate(1.05);
+    box-shadow:
+      0 0 0 3px rgba(245,196,81,.20),
+      0 0 24px rgba(245,196,81,.36),
+      0 16px 34px rgba(0,0,0,.36),
+      inset 0 1px 0 rgba(255,255,255,.18) !important;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(calc(var(--seat-scale, 1) * 1.08));
+    filter: brightness(1.32) saturate(1.20);
+    box-shadow:
+      0 0 0 5px rgba(245,196,81,.34),
+      0 0 44px rgba(245,196,81,.66),
+      0 20px 42px rgba(0,0,0,.42),
+      inset 0 1px 0 rgba(255,255,255,.24) !important;
+  }
+}
+
+.mobile-player-card.turn {
+  animation: prototype75MobileCardHeartbeat 1.05s ease-in-out infinite !important;
+  transform-origin: center center !important;
+  will-change: transform, box-shadow, filter !important;
+}
+
+@keyframes prototype75MobileCardHeartbeat {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1.02);
+    box-shadow: 0 0 0 1px rgba(253,224,71,.22), 0 8px 18px rgba(0,0,0,.20) !important;
+  }
+  50% {
+    transform: scale(1.025);
+    filter: brightness(1.14);
+    box-shadow: 0 0 0 4px rgba(253,224,71,.36), 0 0 26px rgba(253,224,71,.50), 0 10px 22px rgba(0,0,0,.24) !important;
+  }
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .table-action-banner {
+    top: 16px !important;
+    left: 50% !important;
+    width: min(44vw, 430px) !important;
+    max-height: 22px !important;
+    min-height: 22px !important;
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+    line-height: 1.05 !important;
+    border-radius: 999px !important;
+    z-index: 190 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+  }
+
+  .perspective-stage,
+  .big-table-stage {
+    /* The table can stay full height, but the instruction is no longer visually sitting on the felt. */
+    margin-top: 0 !important;
+  }
+
+  .perspective-seat.active-player-seat,
+  .perspective-seat.my-seat.active-player-seat {
+    animation: prototype75SeatHeartbeat 1.05s ease-in-out infinite !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perspective-seat.active-player-seat,
+  .perspective-seat.my-seat.active-player-seat,
+  .mobile-player-card.turn {
+    animation: none !important;
+  }
+}

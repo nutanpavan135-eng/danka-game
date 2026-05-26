@@ -26,6 +26,8 @@ export function getPermissions(room, playerId) {
   const active = room.players.filter((p) => !p.folded);
   const isMyTurn = current?.id === playerId;
   const isAdmin = room.adminPlayerId === playerId;
+  const isCoAdmin = room.coAdminPlayerId === playerId || me?.role === 'co-admin';
+  const isRoomManager = isAdmin || isCoAdmin;
   const allOpen = active.every((p) => p.sawCards);
   const dealer = room.players[room.dealerIndex];
   const dealerIsMe = dealer?.id === playerId;
@@ -60,8 +62,8 @@ export function getPermissions(room, playerId) {
     canStartNextRound: room.status === 'roundOver' && dealerIsMe,
     canChooseOneCardMode,
     canRequestPlaceCut: room.status === 'cycleBreak',
-    canContinueSamePlayers: room.status === 'cycleBreak' && isAdmin,
+    canContinueSamePlayers: room.status === 'cycleBreak' && isRoomManager,
     canLeaveAtCycleBreak: room.status === 'cycleBreak',
-    canEndSession: isAdmin && ['lobby', 'cycleBreak', 'roundOver'].includes(room.status),
+    canEndSession: isRoomManager && ['lobby', 'cycleBreak', 'roundOver'].includes(room.status),
   };
 }

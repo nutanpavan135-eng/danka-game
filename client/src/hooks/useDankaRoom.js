@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { socket, connectSocket } from '../socket';
 
 const SESSION_KEY = 'danka.prototype7.phase4.session';
+const SESSION_STORAGE_KEY = 'danka.prototype7.phase4.tab-session';
 const LEGACY_SESSION_KEYS = ['danka.prototype526.session'];
 const RESYNC_INTERVAL_MS = 6000;
 const DUPLICATE_TAB_CHANNEL = 'danka.prototype7.phase4.tab-guard';
@@ -14,11 +15,19 @@ function getSessionStorage() {
   }
 }
 
+function getPersistentStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 function readSavedSession() {
   try {
-    const storage = getSessionStorage();
-    if (!storage) return null;
-    const raw = storage.getItem(SESSION_KEY);
+    const session = getSessionStorage();
+    const persistent = getPersistentStorage();
+    const raw = session?.getItem(SESSION_STORAGE_KEY) || persistent?.getItem(SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.roomCode || !parsed?.playerId) return null;
@@ -31,14 +40,14 @@ function readSavedSession() {
 function saveSession(session) {
   try {
     if (!session?.roomCode || !session?.playerId) return;
-    const storage = getSessionStorage();
-    if (!storage) return;
-    storage.setItem(SESSION_KEY, JSON.stringify({
+    const data = JSON.stringify({
       roomCode: session.roomCode,
       playerId: session.playerId,
       playerName: session.playerName || '',
       savedAt: Date.now(),
-    }));
+    });
+    getSessionStorage()?.setItem(SESSION_STORAGE_KEY, data);
+    getPersistentStorage()?.setItem(SESSION_KEY, data);
   } catch {
     // Storage can fail in private mode; the game still works without refresh restore.
   }
@@ -47,10 +56,12 @@ function saveSession(session) {
 function clearSavedSession() {
   try {
     const storage = getSessionStorage();
+    const persistent = getPersistentStorage();
+    storage?.removeItem(SESSION_STORAGE_KEY);
     storage?.removeItem(SESSION_KEY);
+    persistent?.removeItem(SESSION_KEY);
     LEGACY_SESSION_KEYS.forEach((key) => storage?.removeItem(key));
-    window.localStorage?.removeItem?.(SESSION_KEY);
-    LEGACY_SESSION_KEYS.forEach((key) => window.localStorage?.removeItem?.(key));
+    LEGACY_SESSION_KEYS.forEach((key) => persistent?.removeItem(key));
   } catch {}
 }
 
@@ -99,8 +110,8 @@ export function useDankaRoom() {
       }
 
       if (message.type === 'session-already-open' && saved?.roomCode === activeRoomCode && saved?.playerId === activePlayerId && !roomRef.current) {
-        // A duplicated browser tab copies sessionStorage. Clear only the duplicate so it can be used as a fresh Join Room tab.
-        clearSavedSession();
+        // A duplicated browser tab copies sessionStorage. Clear only this tab's session so it can be used as a fresh Join Room tab.
+        getSessionStorage()?.removeItem(SESSION_STORAGE_KEY);
         setIsRestoringSession(false);
         setError('');
       }
@@ -300,6 +311,7 @@ export function useDankaRoom() {
     drop: () => emitAction('drop'),
     askShow: () => emitAction('askShow'),
     askSide: () => emitAction('askSide'),
+    emergencyRemovePlayer: (targetPlayerId) => emitAction('emergencyRemovePlayer', { targetPlayerId }),
     startNextRound: () => emitAction('startNextRound'),
     chooseOneCardMode: (mode) => emitAction('chooseOneCardMode', { mode }),
     requestPlaceCut: () => emitAction('requestPlaceCut'),

@@ -681,11 +681,13 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
       <div className="seats polygon-seats big-table-stage perspective-stage" style={{ '--player-count': n }}>
         <div className="table-center polygon-table real-table perspective-felt-table">
           <CenterDeck dealKey={dealKey} show={showCenterDeck} duration={deckDuration} />
+        </div>
+        {['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
+        <div className="table-popup-layer" aria-live="polite">
           <TimedCenterPopup announcement={room.oneCardModeAnnouncement} />
           <TimedCenterPopup announcement={room.wellCutAnnouncement} className="one-card-popup well-cut-popup" />
           <TimedCenterPopup announcement={room.winnerAnnouncement} className="one-card-popup winner-pop-popup" />
         </div>
-        {['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
         <ShuffleDeckAnimation room={room} />
         <DealingCardsOverlay room={room} myIndex={myIndex} />
         <ChipFlights room={room} myIndex={myIndex} />
@@ -726,10 +728,15 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
 }
 
 
-function MobileInfoDrawers({ room }) {
+function MobileInfoDrawers({ room, playerId, canManageRoom, onRemovePlayer }) {
   const [openPanel, setOpenPanel] = useState(null);
   const reveal = room.lastCycleReveal;
   const close = () => setOpenPanel(null);
+  function handleMobileRemove(player) {
+    if (!canManageRoom || player.id === playerId || !onRemovePlayer) return;
+    const confirmed = window.confirm(`Remove ${player.name} from this room? If they are active in the current cycle, their hand will be counted as dropped.`);
+    if (confirmed) onRemovePlayer(player.id);
+  }
 
   return (
     <div className="mobile-drawer-system" aria-label="Mobile game panels">
@@ -768,15 +775,26 @@ function MobileInfoDrawers({ room }) {
           <h2>Players</h2>
           <button type="button" onClick={close}>×</button>
         </div>
+        {room.lastActionMessage && (
+          <section className="mobile-game-log-card" aria-label="Latest game update">
+            <b>Latest Update</b>
+            <p>{room.lastActionMessage}</p>
+          </section>
+        )}
         <div className="mobile-player-list">
           {room.players.map((player, index) => (
             <div key={player.id} className={`mobile-player-card player-tone-${index % 8} ${index === room.turnIndex ? 'turn' : ''} ${player.id === room.winnerId ? 'winner-result' : ''}`}>
               <div className="row between">
                 <b>{player.name}</b>
-                <span>{index === room.turnIndex ? 'Turn' : player.role}</span>
+                <span>{player.role}</span>
               </div>
               <p className="muted">Coins: <b>{player.coins}</b> • Status: {player.status || '-'}</p>
               <p className="muted">Cards: {player.cardCount || player.cards?.length || 0} • {player.sawCards ? 'Open' : 'Blind'}</p>
+              {canManageRoom && player.id !== playerId && (
+                <button type="button" className="mobile-emergency-remove-button" onClick={() => handleMobileRemove(player)}>
+                  Remove
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -802,7 +820,7 @@ export default function App() {
   const [createName, setCreateName] = useState('Nutan');
   const [joinName, setJoinName] = useState('');
   const [joinCode, setJoinCode] = useState('');
-  const [startingCoins, setStartingCoins] = useState(100);
+  const [startingCoins, setStartingCoins] = useState(0);
   const [cyclesPerRound, setCyclesPerRound] = useState(20);
   const [cutPercent, setCutPercent] = useState(50);
   const [oneCardMode, setOneCardMode] = useState('highest');
@@ -888,11 +906,11 @@ export default function App() {
             <label>Your Name</label>
             <input value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder="Enter your name" />
             <label>Coins Per Person</label>
-            <input type="number" min="1" value={startingCoins} onChange={(e) => setStartingCoins(Number(e.target.value))} />
+            <input type="number" min="0" value={startingCoins} onChange={(e) => setStartingCoins(e.target.value === '' ? '' : Number(e.target.value))} />
             <label>Cycles Per Round</label>
             <input type="number" min="1" max="50" value={cyclesPerRound} onChange={(e) => setCyclesPerRound(Number(e.target.value))} />
             <p className="muted tiny-help">After this many completed cycles, players can request Place Cut, continue with the same players, or leave at the round break.</p>
-            <button onClick={() => createRoom({ playerName: createName, startingCoins, cyclesPerRound })}>Create Room</button>
+            <button onClick={() => createRoom({ playerName: createName, startingCoins: startingCoins === '' ? undefined : startingCoins, cyclesPerRound })}>Create Room</button>
             {error && <p className="error">{error}</p>}
           </section>
         )}
@@ -920,6 +938,7 @@ export default function App() {
   const me = room.players.find((p) => p.id === playerId);
   const permissions = getPermissions(room, playerId);
   const showPlayerHomeButton = !!room && !permissions.canEndSession;
+  const canManageRoom = playerId === room.adminPlayerId || playerId === room.coAdminPlayerId || me?.role === 'admin' || me?.role === 'co-admin';
 
   function confirmLeaveToHome() {
     setLeaveConfirmOpen(false);
@@ -958,7 +977,7 @@ export default function App() {
       {syncStatus && <p className="sync-toast">{syncStatus}</p>}
       <p className="notice compact-notice">{room.lastActionMessage}</p>
       <MobilePortraitNotice />
-      <MobileInfoDrawers room={room} />
+      <MobileInfoDrawers room={room} playerId={playerId} canManageRoom={canManageRoom} onRemovePlayer={danka.emergencyRemovePlayer} />
       {leaveConfirmOpen && (
         <div className="leave-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="leave-confirm-title">
           <section className="leave-confirm-card">
@@ -995,7 +1014,14 @@ export default function App() {
             <h2>Players</h2>
             <div className="player-list-grid">
               {room.players.map((player, index) => (
-                <PlayerSeat key={player.id} player={player} isTurn={index === room.turnIndex} isWinner={player.id === room.winnerId} />
+                <PlayerSeat
+                  key={player.id}
+                  player={player}
+                  isTurn={index === room.turnIndex}
+                  isWinner={player.id === room.winnerId}
+                  canRemove={canManageRoom && player.id !== playerId}
+                  onRemove={danka.emergencyRemovePlayer}
+                />
               ))}
             </div>
             <SettlementPanel room={room} />
