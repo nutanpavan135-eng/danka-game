@@ -44,7 +44,8 @@ function registerBettingEvents(io, socket) {
     if (!isCurrentPlayersSocket(room, socket.id)) return callback?.({ success: false, error: "It is not your turn." });
     clearSideReveal(room);
     const player = getCurrentPlayer(room);
-    if (cutIsRequiredForCurrentPlayer(room)) return callback?.({ success: false, error: "Cut is required now. You cannot See Cards on this turn." });
+    // A player who has the Cut chance may still choose to See Cards instead.
+    // If they open instead of cutting, the Cut opportunity naturally moves to the next blind player after this player's bet/drop/show action.
     if (player.sawCards) return callback?.({ success: false, error: "Already seen cards." });
     player.sawCards = true;
     player.cutLockTurns = 0;
@@ -68,14 +69,21 @@ function registerBettingEvents(io, socket) {
     room.pot += 1;
     let cutMessage = "";
     if (player.cutLockTurns > 0) {
-      player.cutLockTurns -= 1;
-      if (player.cutLockTurns === 0) {
-        player.sawCards = true;
-        player.status = "Open";
-        cutMessage = " Cut protection ended, so cards are now open.";
+      const activeCount = getActivePlayers(room).length;
+      if (activeCount <= 2) {
+        // When only two players remain, the cutter may stay blind without the three-turn auto-open limit.
+        player.status = "Cut Blind";
+        cutMessage = " Cut blind continues because only two active players remain.";
       } else {
-        player.status = `Cut Blind (${player.cutLockTurns} turns left)`;
-        cutMessage = ` Cut lock remaining: ${player.cutLockTurns}.`;
+        player.cutLockTurns -= 1;
+        if (player.cutLockTurns === 0) {
+          player.sawCards = true;
+          player.status = "Open";
+          cutMessage = " Cut protection ended, so cards are now open.";
+        } else {
+          player.status = `Cut Blind (${player.cutLockTurns} turns left)`;
+          cutMessage = ` Cut lock remaining: ${player.cutLockTurns}.`;
+        }
       }
     } else {
       player.status = "Blind";
@@ -109,7 +117,7 @@ function registerBettingEvents(io, socket) {
       return p;
     });
 
-    room.lastActionMessage = `${player.name} used Cut and stays Blind. All other active players are Open. ${player.name} may continue Blind for up to 3 of their own turns, but can See Cards earlier.`;
+    room.lastActionMessage = `${player.name} used Cut and stays Blind. All other active players are Open. ${player.name} may continue Blind for up to 3 of their own turns while more than two players remain. If only two players remain, ${player.name} can stay Blind until choosing See Cards.`;
     room.turnIndex = nextActiveIndex(room, room.turnIndex);
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);
