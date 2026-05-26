@@ -46,15 +46,33 @@ function useDankaSoundEffects(room) {
     oscillator.stop(start + duration + 0.03);
   }
 
+  function chipClink() {
+    tone(880, 0.025, 'square', 0.018, 0);
+    tone(1320, 0.022, 'triangle', 0.014, 0.028);
+    tone(720, 0.03, 'square', 0.012, 0.055);
+    tone(1160, 0.025, 'triangle', 0.011, 0.083);
+  }
+
+  function cardFlick(delay = 0) {
+    tone(320, 0.025, 'triangle', 0.014, delay);
+    tone(180, 0.018, 'square', 0.008, delay + 0.018);
+  }
+
+  function shuffleRustle() {
+    [0, 1, 2, 3, 4, 5, 6].forEach((_, i) => {
+      tone(150 + i * 18, 0.022, 'sawtooth', 0.01, i * 0.045);
+    });
+  }
+
   function play(name) {
     if (name === 'deal') {
-      [260, 310, 360, 410].forEach((freq, i) => tone(freq, 0.055, 'triangle', 0.035, i * 0.055));
+      shuffleRustle();
+      [0, 1, 2, 3, 4, 5].forEach((_, i) => cardFlick(0.28 + i * 0.075));
     } else if (name === 'flip') {
       tone(520, 0.06, 'square', 0.025, 0);
       tone(760, 0.08, 'sine', 0.035, 0.06);
     } else if (name === 'coin') {
-      tone(780, 0.05, 'triangle', 0.035, 0);
-      tone(1040, 0.075, 'triangle', 0.035, 0.055);
+      chipClink();
     } else if (name === 'winner') {
       [523, 659, 784, 1046].forEach((freq, i) => tone(freq, 0.13, 'sine', 0.045, i * 0.09));
     } else if (name === 'wellCut') {
@@ -500,6 +518,31 @@ function CenterDeck({ dealKey, show, duration = 5 }) {
   );
 }
 
+function ShuffleDeckAnimation({ room }) {
+  const [shuffleKey, setShuffleKey] = useState(null);
+  const previousDealRef = useRef(null);
+  const dealKey = `${room.status}-${room.completedRounds}-${room.roundType}-${room.dealerIndex}-${room.players.map((p) => p.cardCount || 0).join('.')}`;
+
+  useEffect(() => {
+    if (room.status !== 'betting') return;
+    if (previousDealRef.current === dealKey) return;
+    previousDealRef.current = dealKey;
+    setShuffleKey(dealKey);
+    const timer = setTimeout(() => setShuffleKey(null), 1100);
+    return () => clearTimeout(timer);
+  }, [dealKey, room.status]);
+
+  if (!shuffleKey) return null;
+
+  return (
+    <div className="shuffle-animation-layer" aria-hidden="true">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <span key={index} className="shuffle-card" style={{ '--i': index }} />
+      ))}
+    </div>
+  );
+}
+
 function DealingCardsOverlay({ room, myIndex }) {
   const [deal, setDeal] = useState(null);
   const n = room.players.length || 1;
@@ -638,11 +681,12 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
       <div className="seats polygon-seats big-table-stage perspective-stage" style={{ '--player-count': n }}>
         <div className="table-center polygon-table real-table perspective-felt-table">
           <CenterDeck dealKey={dealKey} show={showCenterDeck} duration={deckDuration} />
-          {['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
           <TimedCenterPopup announcement={room.oneCardModeAnnouncement} />
           <TimedCenterPopup announcement={room.wellCutAnnouncement} className="one-card-popup well-cut-popup" />
           <TimedCenterPopup announcement={room.winnerAnnouncement} className="one-card-popup winner-pop-popup" />
         </div>
+        {['betting', 'roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status) && <PotOnTable pot={room.pot} />}
+        <ShuffleDeckAnimation room={room} />
         <DealingCardsOverlay room={room} myIndex={myIndex} />
         <ChipFlights room={room} myIndex={myIndex} />
         <CashAwardAnimation award={room.cashAward} players={room.players} myIndex={myIndex} />
@@ -789,24 +833,44 @@ export default function App() {
   if (!room) {
     return (
       <main className="page home entry-home">
-        <section className="hero entry-hero">
-          <h1>DANKA</h1>
-          <p>Play Danka online with your friends.</p>
-          <p className={connected ? 'ok' : 'bad'}>{connected ? 'Backend connected' : 'Backend not connected'}</p>
+        <section className="hero entry-hero phase-one-entry-hero">
+          <div className="entry-brand-lockup">
+            <span className="entry-kicker">Private Multiplayer Card Table</span>
+            <h1>DANKA</h1>
+            <p>Host a room, share the code, and play a live Danka table with friends.</p>
+          </div>
+          <div className="entry-table-preview" aria-hidden="true">
+            <div className="entry-preview-felt">
+              <span className="entry-preview-card card-one">A</span>
+              <span className="entry-preview-card card-two">K</span>
+              <span className="entry-preview-chip chip-one" />
+              <span className="entry-preview-chip chip-two" />
+              <span className="entry-preview-chip chip-three" />
+            </div>
+          </div>
+          <p className={`entry-connection-pill ${connected ? 'is-online' : 'is-offline'}`}>
+            <span />
+            {connected ? 'Backend connected' : 'Backend not connected'}
+          </p>
         </section>
 
         {entryMode === 'choose' && (
-          <section className="panel entry-choice-panel">
-            <h2>Welcome to Danka</h2>
-            <p className="muted entry-muted">Choose how you want to enter the game.</p>
+          <section className="panel entry-choice-panel phase-one-choice-panel">
+            <div className="entry-panel-heading">
+              <span>Start Playing</span>
+              <h2>Choose your seat at the table</h2>
+              <p className="muted entry-muted">Create a new room as admin, or join an existing room with a code.</p>
+            </div>
             <div className="entry-choice-grid">
-              <button className="entry-card-button" onClick={() => setEntryMode('create')}>
+              <button className="entry-card-button entry-primary-choice" onClick={() => setEntryMode('create')}>
+                <b className="entry-choice-icon">+</b>
                 <span>Create Room</span>
-                <small>Start a new table and become the admin.</small>
+                <small>Start a fresh table, choose the coin setup, and become the admin.</small>
               </button>
               <button className="entry-card-button secondary-choice" onClick={() => setEntryMode('join')}>
+                <b className="entry-choice-icon">#</b>
                 <span>Join Room</span>
-                <small>Enter a room code shared by your friend.</small>
+                <small>Enter the room code shared by your friend and jump into the game.</small>
               </button>
             </div>
             {error && <p className="error">{error}</p>}
@@ -814,9 +878,10 @@ export default function App() {
         )}
 
         {entryMode === 'create' && (
-          <section className="panel form entry-form-panel">
+          <section className="panel form entry-form-panel phase-one-form-panel">
             <div className="entry-form-head">
-              <button className="back-link" onClick={resetEntry}>← Back</button>
+              <button className="back-link" onClick={resetEntry}>Back</button>
+              <span className="entry-form-kicker">New Table</span>
               <h2>Create Room</h2>
               <p className="muted">Enter your name, starting coins, and how many cycles should make one round.</p>
             </div>
@@ -833,9 +898,10 @@ export default function App() {
         )}
 
         {entryMode === 'join' && (
-          <section className="panel form entry-form-panel">
+          <section className="panel form entry-form-panel phase-one-form-panel">
             <div className="entry-form-head">
-              <button className="back-link" onClick={resetEntry}>← Back</button>
+              <button className="back-link" onClick={resetEntry}>Back</button>
+              <span className="entry-form-kicker">Existing Table</span>
               <h2>Join Room</h2>
               <p className="muted">Enter your name and the room code shared by the room admin.</p>
             </div>

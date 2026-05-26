@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket, connectSocket } from '../socket';
 
-const SESSION_KEY = 'danka.prototype526.session';
+const SESSION_KEY = 'danka.prototype7.phase4.session';
+const LEGACY_SESSION_KEYS = ['danka.prototype526.session'];
 const RESYNC_INTERVAL_MS = 6000;
+const DUPLICATE_TAB_CHANNEL = 'danka.prototype7.phase4.tab-guard';
+
+function getSessionStorage() {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
 
 function readSavedSession() {
   try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
+    const storage = getSessionStorage();
+    if (!storage) return null;
+    const raw = storage.getItem(SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.roomCode || !parsed?.playerId) return null;
@@ -19,7 +31,9 @@ function readSavedSession() {
 function saveSession(session) {
   try {
     if (!session?.roomCode || !session?.playerId) return;
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify({
+    const storage = getSessionStorage();
+    if (!storage) return;
+    storage.setItem(SESSION_KEY, JSON.stringify({
       roomCode: session.roomCode,
       playerId: session.playerId,
       playerName: session.playerName || '',
@@ -31,7 +45,13 @@ function saveSession(session) {
 }
 
 function clearSavedSession() {
-  try { window.localStorage.removeItem(SESSION_KEY); } catch {}
+  try {
+    const storage = getSessionStorage();
+    storage?.removeItem(SESSION_KEY);
+    LEGACY_SESSION_KEYS.forEach((key) => storage?.removeItem(key));
+    window.localStorage?.removeItem?.(SESSION_KEY);
+    LEGACY_SESSION_KEYS.forEach((key) => window.localStorage?.removeItem?.(key));
+  } catch {}
 }
 
 export function useDankaRoom() {
@@ -51,6 +71,44 @@ export function useDankaRoom() {
   useEffect(() => { roomCodeRef.current = roomCode; }, [roomCode]);
   useEffect(() => { playerIdRef.current = playerId; }, [playerId]);
   useEffect(() => { roomRef.current = room; }, [room]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return undefined;
+    const channel = new BroadcastChannel(DUPLICATE_TAB_CHANNEL);
+    const tabInstanceId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    const saved = readSavedSession();
+    const announce = () => {
+      const activeRoomCode = roomCodeRef.current || readSavedSession()?.roomCode;
+      const activePlayerId = playerIdRef.current || readSavedSession()?.playerId;
+      if (!activeRoomCode || !activePlayerId) return;
+      channel.postMessage({ type: 'claim-session', tabInstanceId, roomCode: activeRoomCode, playerId: activePlayerId });
+    };
+
+    channel.onmessage = (event) => {
+      const message = event.data || {};
+      if (message.tabInstanceId === tabInstanceId) return;
+      const activeRoomCode = roomCodeRef.current || readSavedSession()?.roomCode;
+      const activePlayerId = playerIdRef.current || readSavedSession()?.playerId;
+      if (!activeRoomCode || !activePlayerId) return;
+      const sameSession = message.roomCode === activeRoomCode && message.playerId === activePlayerId;
+      if (!sameSession) return;
+
+      if (message.type === 'claim-session') {
+        channel.postMessage({ type: 'session-already-open', tabInstanceId, roomCode: activeRoomCode, playerId: activePlayerId });
+      }
+
+      if (message.type === 'session-already-open' && saved?.roomCode === activeRoomCode && saved?.playerId === activePlayerId && !roomRef.current) {
+        // A duplicated browser tab copies sessionStorage. Clear only the duplicate so it can be used as a fresh Join Room tab.
+        clearSavedSession();
+        setIsRestoringSession(false);
+        setError('');
+      }
+    };
+
+    window.setTimeout(announce, 350);
+    return () => channel.close();
+  }, []);
 
   function rememberSession(nextRoomCode, nextPlayerId, nextRoom = null) {
     if (!nextRoomCode || !nextPlayerId) return;
@@ -83,7 +141,9 @@ export function useDankaRoom() {
       reconnectingRef.current = false;
       setIsRestoringSession(false);
       if (!response?.success) {
-        setError(response?.error || 'Saved game session could not be restored. Please rejoin the room.');
+        // A saved room can disappear after a backend restart or local test cleanup.
+        // Do not show this as an error on the entry page; simply clear the stale restore data.
+        setError('');
         clearSavedSession();
         return;
       }

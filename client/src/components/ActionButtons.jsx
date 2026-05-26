@@ -6,17 +6,17 @@ export default function ActionButtons({ room, playerId, actions }) {
   const rightButtons = [];
   let fixedDropButton = null;
 
-  if (p.canSeeCards) leftButtons.push(<button key="see" onClick={actions.seeCards}>See Cards</button>);
-  if (p.canBlindBet) leftButtons.push(<button key="blind" onClick={actions.blindBet}>Blind Bet</button>);
-  if (p.canCut) leftButtons.push(<button key="cut" onClick={actions.cut}>Cut</button>);
+  if (p.canSeeCards) leftButtons.push(<button key="see" className="action-button action-primary" onClick={actions.seeCards}>See Cards</button>);
+  if (p.canBlindBet) leftButtons.push(<button key="blind" className="action-button action-secondary" onClick={actions.blindBet}>Blind Bet</button>);
+  if (p.canCut) leftButtons.push(<button key="cut" className="action-button action-special" onClick={actions.cut}>Cut</button>);
 
-  if (p.canOpenBet) rightButtons.push(<button key="open" onClick={actions.openBet}>Open Bet</button>);
+  if (p.canOpenBet) rightButtons.push(<button key="open" className="action-button action-money" onClick={actions.openBet}>Open Bet</button>);
   if (p.canDrop) {
     fixedDropButton = (
       <button
         key="drop"
         type="button"
-        className="drop-action fixed-drop-action"
+        className="action-button action-danger drop-action fixed-drop-action"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.preventDefault();
@@ -28,16 +28,16 @@ export default function ActionButtons({ room, playerId, actions }) {
       </button>
     );
   }
-  if (p.canSide) rightButtons.push(<button key="side" onClick={actions.askSide}>Ask Side</button>);
-  if (p.canShow) rightButtons.push(<button key="show" onClick={actions.askShow}>Show</button>);
-  if (p.canStartNextRound) rightButtons.push(<button key="dealnext" onClick={actions.startNextRound}>Deal Next Cycle</button>);
+  if (p.canSide) rightButtons.push(<button key="side" className="action-button action-special" onClick={actions.askSide}>Ask Side</button>);
+  if (p.canShow) rightButtons.push(<button key="show" className="action-button action-show" onClick={actions.askShow}>Show</button>);
+  if (p.canStartNextRound) rightButtons.push(<button key="dealnext" className="action-button action-primary" onClick={actions.startNextRound}>Deal Next Cycle</button>);
   if (p.canChooseOneCardMode) {
-    leftButtons.push(<button key="highest" onClick={() => actions.chooseOneCardMode('highest')}>Highest Wins</button>);
-    rightButtons.push(<button key="lowest" onClick={() => actions.chooseOneCardMode('lowest')}>Lowest Wins</button>);
+    leftButtons.push(<button key="highest" className="action-button action-special" onClick={() => actions.chooseOneCardMode('highest')}>Highest Wins</button>);
+    rightButtons.push(<button key="lowest" className="action-button action-special" onClick={() => actions.chooseOneCardMode('lowest')}>Lowest Wins</button>);
   }
-  if (p.canRequestPlaceCut) rightButtons.push(<button key="placecut" onClick={actions.requestPlaceCut}>Request Place Cut</button>);
-  if (p.canContinueSamePlayers) rightButtons.push(<button key="continue" onClick={actions.continueSamePlayers}>Continue Same Players</button>);
-  if (p.canLeaveAtCycleBreak) rightButtons.push(<button key="leave" onClick={actions.leaveGameAtCycleBreak}>Leave at Round Break</button>);
+  if (p.canRequestPlaceCut) rightButtons.push(<button key="placecut" className="action-button action-special" onClick={actions.requestPlaceCut}>Request Place Cut</button>);
+  if (p.canContinueSamePlayers) rightButtons.push(<button key="continue" className="action-button action-primary" onClick={actions.continueSamePlayers}>Continue Same Players</button>);
+  if (p.canLeaveAtCycleBreak) rightButtons.push(<button key="leave" className="action-button action-secondary" onClick={actions.leaveGameAtCycleBreak}>Leave at Round Break</button>);
 
   const hasActions = leftButtons.length > 0 || rightButtons.length > 0 || !!fixedDropButton;
   const shouldShowCutPanel = false;
