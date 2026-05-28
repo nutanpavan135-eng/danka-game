@@ -2,7 +2,7 @@ export default function SettlementPanel({ room }) {
   const settlement = room?.settlement;
   if (!settlement) return null;
   return (
-    <div className="panel">
+    <div className="panel settlement-panel">
       <h3>Settlement</h3>
       {settlement.results.map((r) => <p key={r.playerId}>{r.name}: {r.net >= 0 ? '+' : ''}{r.net} coins</p>)}
       <h4>Payments</h4>
