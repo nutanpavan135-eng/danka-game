@@ -55,7 +55,6 @@ function registerRoomEvents(io, socket) {
     }
 
     attachSocketToPlayer(room, socket, player.id);
-    room.lastActionMessage = `${player.name} reconnected to the game.`;
     callback?.({ success: true, roomCode: room.roomCode, playerId: player.id, room: getRoomStateForPlayer(room, player.id) });
     broadcastPrivateRoomState(io, room);
   });
