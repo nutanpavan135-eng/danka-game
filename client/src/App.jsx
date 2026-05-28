@@ -8,6 +8,12 @@ import RoomCodeBadge from './components/RoomCodeBadge';
 import { roundLabel } from './utils/displayHelpers';
 import { getPermissions } from './utils/buttonPermissions';
 
+const DEAL_SHUFFLE_MS = 1500;
+const DEAL_CARD_STEP_MS = 300;
+const DEAL_CARD_FLIGHT_MS = 560;
+const DEAL_REVEAL_LAG_MS = 430;
+const SHUFFLE_LAYER_MS = 1650;
+
 
 function useDankaSoundEffects(room) {
   const audioRef = useRef(null);
@@ -54,20 +60,30 @@ function useDankaSoundEffects(room) {
   }
 
   function cardFlick(delay = 0) {
-    tone(320, 0.025, 'triangle', 0.014, delay);
-    tone(180, 0.018, 'square', 0.008, delay + 0.018);
+    tone(360, 0.026, 'triangle', 0.012, delay);
+    tone(210, 0.018, 'square', 0.006, delay + 0.018);
+    tone(520, 0.018, 'sine', 0.007, delay + 0.034);
   }
 
   function shuffleRustle() {
-    [0, 1, 2, 3, 4, 5, 6].forEach((_, i) => {
-      tone(150 + i * 18, 0.022, 'sawtooth', 0.01, i * 0.045);
+    Array.from({ length: 18 }).forEach((_, i) => {
+      const sweep = i < 9 ? i : 17 - i;
+      tone(135 + sweep * 18, 0.02, 'sawtooth', 0.007, i * 0.055);
+    });
+    tone(420, 0.04, 'triangle', 0.012, 1.02);
+    tone(260, 0.045, 'square', 0.009, 1.12);
+  }
+
+  function dealSoundSequence(totalCards = 0) {
+    shuffleRustle();
+    Array.from({ length: Math.min(30, totalCards) }).forEach((_, i) => {
+      cardFlick((DEAL_SHUFFLE_MS + i * DEAL_CARD_STEP_MS) / 1000);
     });
   }
 
-  function play(name) {
+  function play(name, detail = {}) {
     if (name === 'deal') {
-      shuffleRustle();
-      [0, 1, 2, 3, 4, 5].forEach((_, i) => cardFlick(0.28 + i * 0.075));
+      dealSoundSequence(detail.totalCards || 0);
     } else if (name === 'flip') {
       tone(520, 0.06, 'square', 0.025, 0);
       tone(760, 0.08, 'sine', 0.035, 0.06);
@@ -96,7 +112,9 @@ function useDankaSoundEffects(room) {
     if (!room) return;
     const prev = previousRef.current;
     if (prev.status && prev.status !== room.status) {
-      if (room.status === 'betting') play('deal');
+      if (room.status === 'betting') {
+        play('deal', { totalCards: room.players.length * cardDealCountForRoom(room) });
+      }
       if (room.status === 'roundOver' || room.status === 'cycleBreak') play('winner');
     }
     if (prev.pot !== null && room.pot > prev.pot) play('coin');
@@ -117,6 +135,16 @@ function cardText(card) {
   return card ? `${card.label}${card.suit}` : 'Hidden';
 }
 
+function PlaceCutResultCard({ card }) {
+  if (!card) return null;
+  return (
+    <div className={`placecut-result-card ${card.color === 'red' ? 'red' : 'black'}`} aria-label={cardText(card)}>
+      <span className="placecut-result-rank">{card.label}</span>
+      <span className="placecut-result-suit">{card.suit}</span>
+    </div>
+  );
+}
+
 function polygonPoints(sides, cx = 50, cy = 50, r = 44) {
   const n = Math.max(3, Math.min(13, sides));
   return Array.from({ length: n }).map((_, i) => {
@@ -133,19 +161,36 @@ function potChipCount(pot) {
 }
 
 function PotOnTable({ pot }) {
+  const chipLayout = [
+    [-32, 14, -18], [-16, 7, 10], [1, 13, -6], [18, 6, 17], [34, 14, -12],
+    [-25, -3, 22], [-8, -10, -15], [10, -4, 8], [28, -11, -24],
+    [-16, -24, -8], [3, -30, 16], [22, -23, -14],
+    [-28, 25, 14], [-5, 26, -20], [17, 24, 9], [39, 25, -10],
+    [-1, -43, 7], [17, -38, -18],
+  ];
   const chips = Array.from({ length: potChipCount(pot) });
   return (
-    <div className="real-pot casino-pot" aria-label={`Pot ${pot}`}>
-      <div className="casino-pot-stack" aria-hidden="true">
-        {chips.map((_, index) => (
-          <span
-            key={index}
-            className={`pot-casino-chip chip-tone-${index % 4}`}
-            style={{ '--i': index }}
-          />
-        ))}
+    <div className="table-pot-layer casino-pot" aria-label={`Pot ${pot}`}>
+      <div className="casino-pot-stack table-pot-stack" aria-hidden="true" key={`pot-stack-${pot}`}>
+        {chips.map((_, index) => {
+          const [x, y, rotation] = chipLayout[index % chipLayout.length];
+          const stackLift = Math.floor(index / chipLayout.length) * 5;
+          return (
+            <span
+              key={index}
+              className={`pot-casino-chip chip-tone-${index % 4}`}
+              style={{
+                '--i': index,
+                '--chip-x': `${x}px`,
+                '--chip-y': `${y - stackLift}px`,
+                '--chip-rot': `${rotation}deg`,
+                '--chip-z': index + 1,
+              }}
+            />
+          );
+        })}
       </div>
-      <b>Pot: {pot}</b>
+      <b className="table-pot-label">Pot: {pot}</b>
     </div>
   );
 }
@@ -154,11 +199,15 @@ function PlaceCutDeck({ room, playerId, actions }) {
   if (room.status !== 'placeCut') return null;
   const picks = room.placeCut?.picks || [];
   const myPick = picks.find((p) => p.playerId === playerId);
+  const pickedIds = new Set(picks.map((p) => p.playerId));
+  const waitingPlayers = room.players.filter((player) => !pickedIds.has(player.id));
+  const pickedNames = picks.map((pick) => pick.playerName).filter(Boolean);
+  const waitingNames = waitingPlayers.map((player) => player.name).join(', ');
   const remaining = room.placeCut?.remainingCards ?? Math.max(0, 52 - picks.length);
   const cards = Array.from({ length: remaining });
 
   return (
-    <div className="placecut-table-layer">
+    <div className="placecut-table-layer placecut-focus-layer">
       <div className="placecut-instructions">
         <h2>Place Cut</h2>
         <p>Pick any facedown card from the spread. Your selected card will appear beside your player.</p>
@@ -184,6 +233,12 @@ function PlaceCutDeck({ room, playerId, actions }) {
           );
         })}
       </div>
+      <aside className="placecut-status-strip" aria-label="Place Cut player status">
+        <b>Picked {picks.length}/{room.players.length}</b>
+        {waitingPlayers.length > 0 && <span>Waiting: {waitingNames}</span>}
+        {waitingPlayers.length === 0 && <span>All players picked.</span>}
+        {pickedNames.length > 0 && <small>Done: {pickedNames.join(', ')}</small>}
+      </aside>
     </div>
   );
 }
@@ -193,6 +248,9 @@ function PlaceCutRanking({ room, actions, playerId }) {
   const order = room.placeCut?.order || [];
   const highest = order[0];
   const canChoose = room.placeCut?.highestPlayerId === playerId;
+  const helperText = canChoose
+    ? 'Tap a seat to become dealer.'
+    : `Waiting for ${highest?.playerName || 'the highest card holder'} to choose a seat.`;
 
   return (
     <div className="placecut-table-layer ranking-layer">
@@ -205,13 +263,12 @@ function PlaceCutRanking({ room, actions, playerId }) {
         {order.map((pick, index) => (
           <div key={pick.playerId} className={`ranked-pick ${index === 0 ? 'top-rank' : ''}`}>
             <span>#{index + 1}</span>
-            <PlayingCard card={pick.card} />
+            <PlaceCutResultCard card={pick.card} />
             <b>{pick.playerName}</b>
           </div>
         ))}
       </div>
-      {canChoose && <p className="seat-choose-hint">Click one of the table seats to choose where you want to sit.</p>}
-      {!canChoose && <p className="seat-choose-hint">Waiting for {highest?.playerName} to choose a seat.</p>}
+      <p className="seat-choose-hint">{helperText}</p>
     </div>
   );
 }
@@ -259,7 +316,7 @@ function TableActionBanner({ room, playerId, permissions }) {
         : 'Waiting for players to pick their Place Cut cards.';
   } else if (room.status === 'chooseSeat') {
     text = permissions.canChooseSeat
-      ? 'Your turn: choose your seat on the table. You will become the dealer.'
+      ? 'Your turn: choose a seat. You will become dealer.'
       : `Waiting for ${highest?.playerName || 'the highest card holder'} to choose a seat.`;
   } else if (room.status === 'chooseOneCardMode') {
     if (current?.id === playerId) text = 'Single-card special cycle: choose whether Highest Card Wins or Lowest Card Wins.';
@@ -375,7 +432,7 @@ function useDealtCardVisibility(room, myIndex) {
       for (let offset = 1; offset <= n; offset += 1) {
         const playerIndex = (room.dealerIndex - offset + n) % n;
         const player = room.players[playerIndex];
-        const delay = 900 + order * 330 + 300;
+        const delay = DEAL_SHUFFLE_MS + order * DEAL_CARD_STEP_MS + DEAL_REVEAL_LAG_MS;
         timers.push(setTimeout(() => {
           setVisibleCounts((current) => ({
             ...current,
@@ -388,7 +445,7 @@ function useDealtCardVisibility(room, myIndex) {
 
     timers.push(setTimeout(() => {
       setVisibleCounts(Object.fromEntries(room.players.map((p) => [p.id, Math.max(p.cardCount || 0, p.cards?.length || 0)])));
-    }, 1000 + order * 330 + 500));
+    }, DEAL_SHUFFLE_MS + order * DEAL_CARD_STEP_MS + DEAL_REVEAL_LAG_MS + 500));
 
     return () => timers.forEach(clearTimeout);
   }, [dealKey, myIndex]);
@@ -436,6 +493,7 @@ function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId
   const pick = room.placeCut?.picks?.find((p) => p.playerId === player.id);
   const showSeatNumbers = room.status === 'chooseSeat';
   const canChooseSeat = room.status === 'chooseSeat' && room.placeCut?.highestPlayerId === playerId;
+  const isSeatChoice = room.status === 'chooseSeat';
   const roleText = roleTextForPlayer(room, playerIndex, n);
   const pos = getPerspectivePosition(relativeIndex, n);
   const cardPosition = getCardTargetPosition(relativeIndex, n);
@@ -453,14 +511,14 @@ function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId
         type="button"
         disabled={!canChooseSeat}
         onClick={() => actions.chooseSeat(playerIndex)}
-        className={`seat avatar-seat perspective-seat player-tone-${playerIndex % 8} ${isMe ? 'my-seat' : ''} ${isCurrentTurn ? 'active-player-seat' : ''} ${playerIndex === room.dealerIndex ? 'dealer' : ''} ${canChooseSeat ? 'clickable-seat' : ''}`}
+        className={`seat avatar-seat perspective-seat player-tone-${playerIndex % 8} ${isMe ? 'my-seat' : ''} ${isCurrentTurn ? 'active-player-seat' : ''} ${playerIndex === room.dealerIndex ? 'dealer' : ''} ${canChooseSeat ? 'clickable-seat' : ''} ${isSeatChoice ? 'seat-choice-seat' : ''}`}
         style={{ left: `${pos.x}%`, top: `${pos.y}%`, '--seat-scale': pos.scale }}
       >
         {showSeatNumbers && <div className="seat-label">Seat {playerIndex + 1}</div>}
         <div className="avatar"><span className="avatar-head" /><span className="avatar-body" /></div>
-        <b>{room.status === 'chooseSeat' ? 'Choose here' : player.name}</b>
-        <small>{room.status === 'chooseSeat' ? 'Available seat' : roleText}</small>
-        {['placeCut', 'chooseSeat'].includes(room.status) && pick?.card && <div className="seat-pick"><PlayingCard card={pick.card} /></div>}
+        <b>{isSeatChoice ? `Seat ${playerIndex + 1}` : player.name}</b>
+        <small>{isSeatChoice ? (canChooseSeat ? 'Tap to choose' : 'Available') : roleText}</small>
+        {['placeCut', 'chooseSeat'].includes(room.status) && pick?.card && <div className={`seat-pick ${isSeatChoice ? 'seat-pick-result' : ''}`}><PlayingCard card={pick.card} /></div>}
         {['placeCut', 'chooseSeat'].includes(room.status) && pick?.hasPicked && !pick?.card && <div className="seat-pick-mini">Picked</div>}
       </button>
     </>
@@ -528,7 +586,7 @@ function ShuffleDeckAnimation({ room }) {
     if (previousDealRef.current === dealKey) return;
     previousDealRef.current = dealKey;
     setShuffleKey(dealKey);
-    const timer = setTimeout(() => setShuffleKey(null), 1100);
+    const timer = setTimeout(() => setShuffleKey(null), SHUFFLE_LAYER_MS);
     return () => clearTimeout(timer);
   }, [dealKey, room.status]);
 
@@ -536,9 +594,23 @@ function ShuffleDeckAnimation({ room }) {
 
   return (
     <div className="shuffle-animation-layer" aria-hidden="true">
-      {Array.from({ length: 10 }).map((_, index) => (
-        <span key={index} className="shuffle-card" style={{ '--i': index }} />
-      ))}
+      {Array.from({ length: 16 }).map((_, index) => {
+        const side = index % 2 === 0 ? -1 : 1;
+        const depth = Math.floor(index / 2);
+        return (
+          <span
+            key={index}
+            className="shuffle-card"
+            style={{
+              '--i': index,
+              '--fan-x': `${side * (18 + depth * 7)}px`,
+              '--fan-y': `${(depth - 4) * 3}px`,
+              '--fan-r': `${side * (10 + depth * 1.5)}deg`,
+              '--snap-r': `${side * (2 + depth * 0.4)}deg`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -557,14 +629,23 @@ function DealingCardsOverlay({ room, myIndex }) {
       for (let offset = 1; offset <= n; offset += 1) {
         const playerIndex = (room.dealerIndex - offset + n) % n;
         const relativeIndex = (playerIndex - myIndex + n) % n;
-        const pos = getPerspectivePosition(relativeIndex, n);
-  const cardPosition = getCardTargetPosition(relativeIndex, n);
-        sequence.push({ order, x: pos.x, y: pos.y, scale: pos.scale, round });
+        const cardPosition = getCardTargetPosition(relativeIndex, n);
+        const targetX = cardPosition.x - 50;
+        const targetY = cardPosition.y - 50;
+        sequence.push({
+          order,
+          x: cardPosition.x,
+          y: cardPosition.y,
+          scale: cardPosition.scale,
+          round,
+          midX: targetX * 0.42,
+          midY: targetY * 0.34 - (cardPosition.y > 55 ? 12 : 18),
+        });
         order += 1;
       }
     }
     setDeal({ id: dealKey, sequence });
-    const totalTime = 800 + sequence.length * 330;
+    const totalTime = DEAL_SHUFFLE_MS + sequence.length * DEAL_CARD_STEP_MS + DEAL_CARD_FLIGHT_MS + 300;
     const timer = setTimeout(() => setDeal((current) => current?.id === dealKey ? null : current), totalTime);
     return () => clearTimeout(timer);
   }, [dealKey]);
@@ -579,9 +660,12 @@ function DealingCardsOverlay({ room, myIndex }) {
           style={{
             '--to-x': `${item.x - 50}%`,
             '--to-y': `${item.y - 50}%`,
-            '--deal-delay': `${0.9 + item.order * 0.33}s`,
+            '--deal-mid-x': `${item.midX}%`,
+            '--deal-mid-y': `${item.midY}%`,
+            '--deal-delay': `${(DEAL_SHUFFLE_MS + item.order * DEAL_CARD_STEP_MS) / 1000}s`,
             '--deal-scale': item.scale,
             '--deal-rotate': `${((item.order % 5) - 2) * 5}deg`,
+            '--deal-order': item.order,
           }}
         >D</span>
       ))}
@@ -664,7 +748,8 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
   const dealKey = `${room.status}-${room.completedRounds}-${room.roundType}-${room.dealerIndex}-${room.players.map((p) => p.cardCount || 0).join('.')}`;
   const cardsEach = cardDealCountForRoom(room);
   const showCenterDeck = room.status === 'betting' && cardsEach > 0;
-  const deckDuration = Math.max(3.2, 1 + (n * cardsEach * 0.33) + 0.7);
+  const totalDealCards = n * cardsEach;
+  const deckDuration = Math.max(3.6, (DEAL_SHUFFLE_MS + totalDealCards * DEAL_CARD_STEP_MS + 900) / 1000);
 
   return (
     <section className="seat-table-panel table-half-panel perspective-table-panel">
@@ -678,7 +763,7 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
 
       <TableActionBanner room={room} playerId={playerId} permissions={permissions} />
 
-      <div className="seats polygon-seats big-table-stage perspective-stage" style={{ '--player-count': n }}>
+      <div className={`seats polygon-seats big-table-stage perspective-stage ${room.status === 'placeCut' ? 'placecut-focus-mode' : ''} ${room.status === 'chooseSeat' ? 'seat-choice-mode' : ''}`} style={{ '--player-count': n }}>
         <div className="table-center polygon-table real-table perspective-felt-table">
           <CenterDeck dealKey={dealKey} show={showCenterDeck} duration={deckDuration} />
         </div>
@@ -728,9 +813,22 @@ function SeatTable({ room, playerId, actions, cutPercent, setCutPercent, oneCard
 }
 
 
+function isConnectionOnlyUpdate(message = '') {
+  return /reconnected to the game|disconnected/i.test(message);
+}
+
+function formatRoleLabel(role = 'player') {
+  return String(role)
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 function MobileInfoDrawers({ room, playerId, canManageRoom, onRemovePlayer }) {
   const [openPanel, setOpenPanel] = useState(null);
   const reveal = room.lastCycleReveal;
+  const latestGameUpdate = isConnectionOnlyUpdate(room.lastActionMessage) ? '' : room.lastActionMessage;
+  const activePlayer = room.players[room.turnIndex];
   const close = () => setOpenPanel(null);
   function handleMobileRemove(player) {
     if (!canManageRoom || player.id === playerId || !onRemovePlayer) return;
@@ -739,7 +837,7 @@ function MobileInfoDrawers({ room, playerId, canManageRoom, onRemovePlayer }) {
   }
 
   return (
-    <div className="mobile-drawer-system" aria-label="Mobile game panels">
+    <div className={`mobile-drawer-system ${openPanel ? `drawer-open open-${openPanel}` : ''}`} aria-label="Mobile game panels">
       <button type="button" className="mobile-edge-tab mobile-left-tab" onClick={() => setOpenPanel(openPanel === 'left' ? null : 'left')} aria-label="Open previous result panel">‹</button>
       <button type="button" className="mobile-edge-tab mobile-right-tab" onClick={() => setOpenPanel(openPanel === 'right' ? null : 'right')} aria-label="Open players panel">›</button>
 
@@ -753,15 +851,24 @@ function MobileInfoDrawers({ room, playerId, canManageRoom, onRemovePlayer }) {
         {!reveal && <p className="muted">No previous cycle result yet.</p>}
         {reveal && (
           <div className="mobile-result-list">
-            <p className="winner-badge mobile-winner-badge">{reveal.winnerName} won with {reveal.winningHand?.name}</p>
+            <section className="mobile-result-summary-card">
+              <span>Winner</span>
+              <i aria-hidden="true">-</i>
+              <b>{reveal.winnerName}</b>
+              <i aria-hidden="true">-</i>
+              <small>{reveal.winningHand?.name || 'Winning hand'}</small>
+            </section>
             {reveal.players.map((player, index) => (
               <div key={player.id} className={`mobile-result-card ${player.id === reveal.winnerId ? 'winner-result' : ''}`}>
-                <div className="row between">
-                  <b>#{index + 1} {player.name}</b>
-                  <span>{player.handName}</span>
+                <div className="mobile-result-rank">#{index + 1}</div>
+                <div className="mobile-result-body">
+                  <div className="mobile-result-title">
+                    <b>{player.name}</b>
+                  </div>
+                  <p className="muted mobile-result-ordered">{player.orderedCardsText}</p>
+                  <span className="mobile-result-hand-pill">{player.handName}</span>
                 </div>
-                <p className="muted">{player.orderedCardsText}</p>
-                <div className="cards compact-picks">
+                <div className="cards compact-picks mini-result-cards">
                   {(player.cards || []).map((card, cardIndex) => <PlayingCard key={cardIndex} card={card} hidden={false} />)}
                 </div>
               </div>
@@ -775,21 +882,33 @@ function MobileInfoDrawers({ room, playerId, canManageRoom, onRemovePlayer }) {
           <h2>Players</h2>
           <button type="button" onClick={close}>×</button>
         </div>
-        {room.lastActionMessage && (
+        <section className="mobile-table-brief" aria-label="Current table status">
+          <span>{room.status}</span>
+          <b>{activePlayer ? `${activePlayer.name}'s turn` : 'Waiting'}</b>
+          <small>Pot {room.pot || 0} / Cycle {room.completedRounds || 0}/{room.cycleTarget || '-'}</small>
+        </section>
+        {latestGameUpdate && (
           <section className="mobile-game-log-card" aria-label="Latest game update">
             <b>Latest Update</b>
-            <p>{room.lastActionMessage}</p>
+            <p>{latestGameUpdate}</p>
           </section>
         )}
         <div className="mobile-player-list">
           {room.players.map((player, index) => (
             <div key={player.id} className={`mobile-player-card player-tone-${index % 8} ${index === room.turnIndex ? 'turn' : ''} ${player.id === room.winnerId ? 'winner-result' : ''}`}>
-              <div className="row between">
-                <b>{player.name}</b>
-                <span>{player.role}</span>
+              <div className="mobile-player-avatar" aria-hidden="true">{player.name?.charAt(0)?.toUpperCase() || 'P'}</div>
+              <div className="mobile-player-main">
+                <div className="mobile-player-title">
+                  <b>{player.name}</b>
+                  <span className="mobile-role-pill">{formatRoleLabel(player.role)}</span>
+                </div>
+                <div className="mobile-player-meta">
+                  <span><b>{player.coins}</b> coins</span>
+                  <span>{player.status || 'waiting'}</span>
+                  <span>{player.cardCount || player.cards?.length || 0} cards</span>
+                  <span>{player.sawCards ? 'Open' : 'Blind'}</span>
+                </div>
               </div>
-              <p className="muted">Coins: <b>{player.coins}</b> • Status: {player.status || '-'}</p>
-              <p className="muted">Cards: {player.cardCount || player.cards?.length || 0} • {player.sawCards ? 'Open' : 'Blind'}</p>
               {canManageRoom && player.id !== playerId && (
                 <button type="button" className="mobile-emergency-remove-button" onClick={() => handleMobileRemove(player)}>
                   Remove
