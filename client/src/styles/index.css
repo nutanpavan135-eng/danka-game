@@ -5692,7 +5692,7 @@ body {
   }
 
   .table-action-banner {
-    top: 18px !important;
+    top: 10px !important;
     width: min(47vw, 470px) !important;
     min-height: 22px !important;
     max-height: 22px !important;
@@ -7193,5 +7193,185 @@ body {
   .mobile-panel-head {
     top: 0 !important;
     margin: 0 -10px 10px !important;
+  }
+}
+
+/* Prototype 7.7 mobile notch + previous-result card readability patch. */
+@media (max-width: 950px) and (orientation: landscape) {
+  .mobile-edge-tab {
+    top: auto !important;
+    bottom: max(18px, env(safe-area-inset-bottom)) !important;
+    transform: none !important;
+  }
+
+  .mobile-drawer-system.drawer-open .mobile-edge-tab {
+    transform: scale(.84) !important;
+  }
+
+  .mini-result-cards .card.clean-face-card .clean-card-center.suit-only {
+    inset: 10px 0 !important;
+  }
+
+  .mini-result-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 13px !important;
+    line-height: 1 !important;
+  }
+
+  .mini-result-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 9px !important;
+    letter-spacing: 0 !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .mobile-edge-tab {
+    bottom: max(14px, env(safe-area-inset-bottom)) !important;
+    width: 26px !important;
+    height: 58px !important;
+  }
+
+  .mini-result-cards .card.clean-face-card .clean-card-center.suit-only {
+    inset: 9px 0 !important;
+  }
+
+  .mini-result-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 12px !important;
+  }
+
+  .mini-result-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 8px !important;
+  }
+}
+
+/* Prototype 7.8 mobile round-break segmented actions + haptic-ready controls. */
+.cycle-break-action-shell {
+  width: 100%;
+  display: flex !important;
+  justify-content: center;
+  align-items: flex-end;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.cycle-break-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: min(94vw, 430px);
+  padding: 7px;
+  border-radius: 14px;
+  border: 1px solid rgba(247, 211, 122, .38);
+  background:
+    linear-gradient(180deg, rgba(17, 42, 34, .92), rgba(5, 16, 14, .88)),
+    radial-gradient(circle at 50% 0%, rgba(247, 211, 122, .18), transparent 58%);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .16);
+  backdrop-filter: blur(12px);
+}
+
+.cycle-break-button {
+  appearance: none;
+  height: 36px;
+  min-width: 100px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  color: #fff8df;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 8px 18px rgba(0, 0, 0, .24);
+  touch-action: manipulation;
+}
+
+.cycle-break-placecut {
+  background: linear-gradient(180deg, #67e8f9, #0e7490 72%, #164e63);
+  color: #04191f;
+}
+
+.cycle-break-continue {
+  background: linear-gradient(180deg, #fde68a, #d97706 68%, #92400e);
+  color: #211300;
+}
+
+.cycle-break-leave {
+  background: linear-gradient(180deg, #5eead4, #0f766e 70%, #134e4a);
+  color: #031b18;
+}
+
+.cycle-break-button:active {
+  transform: translateY(1px) scale(.99);
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .table-action-dock .actions.cycle-break-action-shell {
+    height: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+    padding: 0 0 0 max(64px, env(safe-area-inset-left)) !important;
+    pointer-events: none;
+  }
+
+  .table-action-dock .cycle-break-actions {
+    pointer-events: auto;
+    gap: 6px;
+    max-width: calc(100vw - 112px);
+    padding: 5px;
+    border-radius: 15px;
+  }
+
+  .table-action-dock .cycle-break-button {
+    height: 32px;
+    min-width: 82px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .table-action-dock .cycle-break-actions {
+    gap: 5px;
+    max-width: calc(100vw - 92px);
+    padding: 4px;
+  }
+
+  .table-action-dock .actions.cycle-break-action-shell {
+    padding-left: max(54px, env(safe-area-inset-left)) !important;
+  }
+
+  .table-action-dock .cycle-break-button {
+    height: 30px;
+    min-width: 68px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+}
+
+/* Prototype 7.9 mobile header alignment: keep the table instruction beside the title, clear of room controls. */
+@media (max-width: 950px) and (orientation: landscape) {
+  .table-action-banner {
+    left: clamp(148px, 19.5vw, 190px) !important;
+    right: clamp(230px, 30vw, 292px) !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    top: 10px !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .table-action-banner {
+    left: clamp(130px, 19.5vw, 152px) !important;
+    right: clamp(198px, 30vw, 236px) !important;
+    top: 10px !important;
+    padding-inline: 10px !important;
   }
 }
