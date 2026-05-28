@@ -7,6 +7,7 @@ import SettlementPanel from './components/SettlementPanel';
 import RoomCodeBadge from './components/RoomCodeBadge';
 import { roundLabel } from './utils/displayHelpers';
 import { getPermissions } from './utils/buttonPermissions';
+import { triggerHaptic } from './utils/haptics';
 
 const DEAL_SHUFFLE_MS = 1500;
 const DEAL_CARD_STEP_MS = 300;
@@ -121,6 +122,32 @@ function useDankaSoundEffects(room) {
     if (prev.winnerId !== room.winnerAnnouncement?.id && room.winnerAnnouncement?.id) play('winner');
     if (prev.wellCutId !== room.wellCutAnnouncement?.id && room.wellCutAnnouncement?.id) play('wellCut');
     if (prev.oneCardId !== room.oneCardModeAnnouncement?.id && room.oneCardModeAnnouncement?.id) play('flip');
+    previousRef.current = {
+      status: room.status,
+      pot: room.pot,
+      winnerId: room.winnerAnnouncement?.id || null,
+      wellCutId: room.wellCutAnnouncement?.id || null,
+      oneCardId: room.oneCardModeAnnouncement?.id || null,
+    };
+  }, [room?.status, room?.pot, room?.winnerAnnouncement?.id, room?.wellCutAnnouncement?.id, room?.oneCardModeAnnouncement?.id]);
+}
+
+function useDankaHapticEvents(room) {
+  const previousRef = useRef({ status: null, pot: null, winnerId: null, wellCutId: null, oneCardId: null });
+
+  useEffect(() => {
+    if (!room) return;
+    const prev = previousRef.current;
+
+    if (prev.status && prev.status !== room.status) {
+      if (room.status === 'betting') triggerHaptic('selection');
+      if (room.status === 'roundOver' || room.status === 'cycleBreak') triggerHaptic('success');
+    }
+    if (prev.pot !== null && room.pot > prev.pot) triggerHaptic('tap');
+    if (prev.winnerId !== room.winnerAnnouncement?.id && room.winnerAnnouncement?.id) triggerHaptic('success');
+    if (prev.wellCutId !== room.wellCutAnnouncement?.id && room.wellCutAnnouncement?.id) triggerHaptic('selection');
+    if (prev.oneCardId !== room.oneCardModeAnnouncement?.id && room.oneCardModeAnnouncement?.id) triggerHaptic('selection');
+
     previousRef.current = {
       status: room.status,
       pot: room.pot,
@@ -829,17 +856,27 @@ function MobileInfoDrawers({ room, playerId, canManageRoom, onRemovePlayer }) {
   const reveal = room.lastCycleReveal;
   const latestGameUpdate = isConnectionOnlyUpdate(room.lastActionMessage) ? '' : room.lastActionMessage;
   const activePlayer = room.players[room.turnIndex];
-  const close = () => setOpenPanel(null);
+  const close = () => {
+    triggerHaptic('tap');
+    setOpenPanel(null);
+  };
+  function togglePanel(panel) {
+    triggerHaptic(openPanel === panel ? 'tap' : 'drawer');
+    setOpenPanel(openPanel === panel ? null : panel);
+  }
   function handleMobileRemove(player) {
     if (!canManageRoom || player.id === playerId || !onRemovePlayer) return;
     const confirmed = window.confirm(`Remove ${player.name} from this room? If they are active in the current cycle, their hand will be counted as dropped.`);
-    if (confirmed) onRemovePlayer(player.id);
+    if (confirmed) {
+      triggerHaptic('danger');
+      onRemovePlayer(player.id);
+    }
   }
 
   return (
     <div className={`mobile-drawer-system ${openPanel ? `drawer-open open-${openPanel}` : ''}`} aria-label="Mobile game panels">
-      <button type="button" className="mobile-edge-tab mobile-left-tab" onClick={() => setOpenPanel(openPanel === 'left' ? null : 'left')} aria-label="Open previous result panel">‹</button>
-      <button type="button" className="mobile-edge-tab mobile-right-tab" onClick={() => setOpenPanel(openPanel === 'right' ? null : 'right')} aria-label="Open players panel">›</button>
+      <button type="button" className="mobile-edge-tab mobile-left-tab" onClick={() => togglePanel('left')} aria-label="Open previous result panel">‹</button>
+      <button type="button" className="mobile-edge-tab mobile-right-tab" onClick={() => togglePanel('right')} aria-label="Open players panel">›</button>
 
       {openPanel && <button type="button" className="mobile-drawer-backdrop" onClick={close} aria-label="Close mobile panel" />}
 
@@ -947,6 +984,7 @@ export default function App() {
   const danka = useDankaRoom();
   const { connected, room, roomCode, playerId, error, isRestoringSession, syncStatus, createRoom, joinRoom } = danka;
   useDankaSoundEffects(room);
+  useDankaHapticEvents(room);
 
   function resetEntry() {
     setEntryMode('choose');
