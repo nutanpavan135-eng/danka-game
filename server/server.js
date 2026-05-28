@@ -51,7 +51,6 @@ io.on("connection", (socket) => {
     if (!player) return;
     player.connected = false;
     player.status = "Disconnected";
-    room.lastActionMessage = `${player.name} disconnected.`;
     touchRoom(room, "disconnect");
     saveRooms();
     broadcastPrivateRoomState(io, room);
