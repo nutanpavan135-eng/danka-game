@@ -361,11 +361,14 @@ function TableActionBanner({ room, playerId, permissions }) {
       text = `Waiting for ${current?.name || 'the current player'} to take an action.${singleCardText}`;
     }
   } else if (room.status === 'cycleBreak') {
-    text = 'Cycle complete. Eligible players can request Place Cut, leave at round break, or continue with the same players.';
+    text = 'Cycle complete. Choose Place Cut, Continue, or Leave.';
   } else if (room.status === 'roundOver') {
     const dealer = room.players[room.dealerIndex];
+    const dealLocked = permissions.canStartNextRound && ((room.nextCycleDealReadyInMs || 0) > 0 || (room.nextCycleDealReadyAt || 0) > Date.now());
     text = permissions.canStartNextRound
-      ? 'You won the previous cycle. Click Deal Next Cycle when you are ready to distribute the next hand.'
+      ? dealLocked
+        ? 'Cards are revealed. Take a moment before dealing the next cycle.'
+        : 'You won the previous cycle. Deal Next Cycle is ready.'
       : `Waiting for ${dealer?.name || 'the dealer'} to deal the next cycle.`;
   }
 
@@ -380,21 +383,21 @@ function getPerspectivePosition(relativeIndex, n) {
   if (relativeIndex === 0) return { x: 50, y: 88, scale: 1.10, zone: 'me' };
 
   const preset = {
-    2: { 1: { x: 50, y: 10, scale: 0.9, zone: 'far' } },
+    2: { 1: { x: 50, y: 16, scale: 0.9, zone: 'far' } },
     3: {
-      1: { x: 93, y: 38, scale: 0.9, zone: 'right-rail' },
-      2: { x: 7, y: 38, scale: 0.9, zone: 'left-rail' },
+      1: { x: 90, y: 38, scale: 0.9, zone: 'right-rail' },
+      2: { x: 10, y: 38, scale: 0.9, zone: 'left-rail' },
     },
     4: {
-      1: { x: 93, y: 45, scale: 0.9, zone: 'right-rail' },
-      2: { x: 50, y: 10, scale: 0.86, zone: 'far' },
-      3: { x: 7, y: 45, scale: 0.9, zone: 'left-rail' },
+      1: { x: 90, y: 45, scale: 0.9, zone: 'right-rail' },
+      2: { x: 50, y: 16, scale: 0.86, zone: 'far' },
+      3: { x: 10, y: 45, scale: 0.9, zone: 'left-rail' },
     },
     5: {
-      1: { x: 93, y: 52, scale: 0.88, zone: 'right-rail' },
-      2: { x: 64, y: 10, scale: 0.84, zone: 'far' },
-      3: { x: 36, y: 10, scale: 0.84, zone: 'far' },
-      4: { x: 7, y: 52, scale: 0.88, zone: 'left-rail' },
+      1: { x: 90, y: 52, scale: 0.88, zone: 'right-rail' },
+      2: { x: 64, y: 16, scale: 0.84, zone: 'far' },
+      3: { x: 36, y: 16, scale: 0.84, zone: 'far' },
+      4: { x: 10, y: 52, scale: 0.88, zone: 'left-rail' },
     },
   };
 
@@ -403,39 +406,40 @@ function getPerspectivePosition(relativeIndex, n) {
   const angle = 90 - (360 * relativeIndex) / n;
   const x = 50 + 46 * Math.cos((Math.PI / 180) * angle);
   const y = 50 + 41 * Math.sin((Math.PI / 180) * angle);
-  const railX = Math.max(6, Math.min(94, x));
-  const railY = Math.max(9, Math.min(88, y));
+  const railX = Math.max(10, Math.min(90, x));
+  const railY = Math.max(16, Math.min(88, y));
   const frontScale = railY > 70 ? 1.02 : railY < 22 ? 0.84 : 0.9;
   return { x: railX, y: railY, scale: frontScale, zone: railY > 70 ? 'near' : railY < 25 ? 'far' : railX > 50 ? 'right-rail' : 'left-rail' };
 }
 
 function getCardTargetPosition(relativeIndex, n) {
-  if (relativeIndex === 0) return { x: 50, y: 64, scale: 1.08, zone: 'me-cards' };
+  const seat = getPerspectivePosition(relativeIndex, n);
+  if (relativeIndex === 0) return { x: seat.x, y: Math.max(8, seat.y - 14), scale: 0.98, zone: 'me-cards attached-cards' };
 
   const preset = {
-    2: { 1: { x: 50, y: 32, scale: 0.86, zone: 'far-cards' } },
+    2: { 1: { x: seat.x, y: Math.max(8, seat.y - 8), scale: 0.76, zone: 'far-cards attached-cards' } },
     3: {
-      1: { x: 74, y: 42, scale: 0.82, zone: 'right-cards' },
-      2: { x: 26, y: 42, scale: 0.82, zone: 'left-cards' },
+      1: { x: seat.x, y: Math.max(12, seat.y - 9), scale: 0.76, zone: 'right-cards attached-cards' },
+      2: { x: seat.x, y: Math.max(12, seat.y - 9), scale: 0.76, zone: 'left-cards attached-cards' },
     },
     4: {
-      1: { x: 75, y: 47, scale: 0.82, zone: 'right-cards' },
-      2: { x: 50, y: 30, scale: 0.82, zone: 'far-cards' },
-      3: { x: 25, y: 47, scale: 0.82, zone: 'left-cards' },
+      1: { x: seat.x, y: Math.max(12, seat.y - 9), scale: 0.76, zone: 'right-cards attached-cards' },
+      2: { x: seat.x, y: Math.max(8, seat.y - 8), scale: 0.74, zone: 'far-cards attached-cards' },
+      3: { x: seat.x, y: Math.max(12, seat.y - 9), scale: 0.76, zone: 'left-cards attached-cards' },
     },
     5: {
-      1: { x: 76, y: 52, scale: 0.80, zone: 'right-cards' },
-      2: { x: 62, y: 31, scale: 0.78, zone: 'far-cards' },
-      3: { x: 38, y: 31, scale: 0.78, zone: 'far-cards' },
-      4: { x: 24, y: 52, scale: 0.80, zone: 'left-cards' },
+      1: { x: seat.x, y: Math.max(12, seat.y - 9), scale: 0.74, zone: 'right-cards attached-cards' },
+      2: { x: seat.x, y: Math.max(8, seat.y - 8), scale: 0.70, zone: 'far-cards attached-cards' },
+      3: { x: seat.x, y: Math.max(8, seat.y - 8), scale: 0.70, zone: 'far-cards attached-cards' },
+      4: { x: seat.x, y: Math.max(12, seat.y - 9), scale: 0.74, zone: 'left-cards attached-cards' },
     },
   };
 
   if (preset[n] && preset[n][relativeIndex]) return preset[n][relativeIndex];
   const angle = 90 - (360 * relativeIndex) / n;
-  const x = 50 + 31 * Math.cos((Math.PI / 180) * angle);
-  const y = 50 + 28 * Math.sin((Math.PI / 180) * angle);
-  return { x, y, scale: y > 58 ? 0.88 : y < 36 ? 0.78 : 0.82, zone: x > 58 ? 'right-cards' : x < 42 ? 'left-cards' : 'far-cards' };
+  const x = seat.x;
+  const y = Math.max(8, seat.y - (seat.zone === 'far' ? 8 : seat.y > 70 ? 14 : 9));
+  return { x, y, scale: y > 58 ? 0.80 : y < 24 ? 0.70 : 0.74, zone: `${x > 58 ? 'right-cards' : x < 42 ? 'left-cards' : 'far-cards'} attached-cards` };
 }
 
 function useDealtCardVisibility(room, myIndex) {
@@ -486,7 +490,7 @@ function roleTextForPlayer(room, playerIndex, n) {
   return 'Player';
 }
 
-function TableSeatCards({ player, isMe, revealAllowed, visibleCount, cardPosition }) {
+function TableSeatCards({ player, isMe, revealAllowed, visibleCount, cardPosition, isResultReveal = false, isWinner = false }) {
   const totalCount = Math.max(player.cardCount || 0, player.cards?.length || 0);
   const count = visibleCount === undefined ? totalCount : Math.min(totalCount, visibleCount);
   if (!count) return null;
@@ -497,11 +501,11 @@ function TableSeatCards({ player, isMe, revealAllowed, visibleCount, cardPositio
       : 'blind';
 
   return (
-    <div className={`table-seat-cards floating-table-cards ${isMe ? 'my-table-cards' : 'opponent-table-cards'} ${cardPosition?.zone || ''} player-cards-${backStatus}`} style={{ '--card-x': `${cardPosition?.x ?? 50}%`, '--card-y': `${cardPosition?.y ?? 50}%`, '--card-target-scale': cardPosition?.scale ?? 1 }}>
+    <div className={`table-seat-cards floating-table-cards ${isMe ? 'my-table-cards' : 'opponent-table-cards'} ${cardPosition?.zone || ''} player-cards-${backStatus} ${isResultReveal ? 'result-reveal-cards' : ''} ${isWinner ? 'winner-reveal-cards' : ''}`} style={{ '--card-x': `${cardPosition?.x ?? 50}%`, '--card-y': `${cardPosition?.y ?? 50}%`, '--card-target-scale': cardPosition?.scale ?? 1 }}>
       {Array.from({ length: count }).map((_, i) => {
         const card = player.cards?.[i];
         const hidden = !revealAllowed || player.cardsHidden || !card;
-        const rotation = (i - (count - 1) / 2) * (isMe ? 5 : 3);
+        const rotation = 0;
         return (
           <div
             key={`${i}-${hidden ? 'back' : 'face'}-${backStatus}-${card ? `${card.label}${card.suit}` : 'x'}`}
@@ -526,14 +530,13 @@ function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId
   const cardPosition = getCardTargetPosition(relativeIndex, n);
   const isMe = player.id === playerId;
   const isCurrentTurn = room.players[room.turnIndex]?.id === player.id;
-  // During cycle break / show result, keep the table clean so the winner popup is readable.
-  // The previous-cycle panel still shows the finished hand details.
-  const showTableCards = room.status === 'betting';
-  const revealAllowed = isMe || !player.cardsHidden;
+  const isResultReveal = ['roundOver', 'cycleBreak', 'sessionEnded'].includes(room.status);
+  const showTableCards = room.status === 'betting' || isResultReveal;
+  const revealAllowed = isResultReveal || isMe || !player.cardsHidden;
 
   return (
     <>
-      {showTableCards && <TableSeatCards player={player} isMe={isMe} revealAllowed={revealAllowed} visibleCount={visibleCardCount} cardPosition={cardPosition} />}
+      {showTableCards && <TableSeatCards player={player} isMe={isMe} revealAllowed={revealAllowed} visibleCount={isResultReveal ? undefined : visibleCardCount} cardPosition={cardPosition} isResultReveal={isResultReveal} isWinner={player.id === room.winnerId} />}
       <button
         type="button"
         disabled={!canChooseSeat}
@@ -542,9 +545,18 @@ function PlayerTableSeat({ player, playerIndex, relativeIndex, n, room, playerId
         style={{ left: `${pos.x}%`, top: `${pos.y}%`, '--seat-scale': pos.scale }}
       >
         {showSeatNumbers && <div className="seat-label">Seat {playerIndex + 1}</div>}
-        <div className="avatar"><span className="avatar-head" /><span className="avatar-body" /></div>
+        <div className="avatar" aria-hidden="true">
+          <span className="avatar-glow" />
+          <span className="avatar-initial">{(player.name || '?').trim().slice(0, 1).toUpperCase()}</span>
+        </div>
         <b>{isSeatChoice ? `Seat ${playerIndex + 1}` : player.name}</b>
         <small>{isSeatChoice ? (canChooseSeat ? 'Tap to choose' : 'Available') : roleText}</small>
+        {!isSeatChoice && (
+          <span className="seat-coin-chip" aria-label={`${player.coins} coins`}>
+            <i aria-hidden="true" />
+            {player.coins}
+          </span>
+        )}
         {['placeCut', 'chooseSeat'].includes(room.status) && pick?.card && <div className={`seat-pick ${isSeatChoice ? 'seat-pick-result' : ''}`}><PlayingCard card={pick.card} /></div>}
         {['placeCut', 'chooseSeat'].includes(room.status) && pick?.hasPicked && !pick?.card && <div className="seat-pick-mini">Picked</div>}
       </button>
@@ -1095,6 +1107,7 @@ export default function App() {
   const me = room.players.find((p) => p.id === playerId);
   const permissions = getPermissions(room, playerId);
   const showPlayerHomeButton = !!room && !permissions.canEndSession;
+  const showRoomCodeBadge = room.status === 'lobby';
   const canManageRoom = playerId === room.adminPlayerId || playerId === room.coAdminPlayerId || me?.role === 'admin' || me?.role === 'co-admin';
 
   function confirmLeaveToHome() {
@@ -1104,15 +1117,15 @@ export default function App() {
   }
 
   return (
-    <main className="page game-page">
+    <main className={`page game-page ${showRoomCodeBadge ? 'room-code-visible' : 'room-code-hidden'}`}>
       <header className="topbar compact-topbar">
         <div>
           <h1>Danka Table</h1>
           <p>{room.status} • {roundLabel(room.roundType, room.oneCardMode)} • Cycles completed {room.completedRounds}/{room.cycleTarget || '-'}</p>
           <p className="you-line">You are playing as: <strong>{me?.name}</strong> ({me?.role})</p>
         </div>
-        <div className="top-right-controls">
-          <RoomCodeBadge code={roomCode} />
+        <div className={`top-right-controls ${showRoomCodeBadge ? 'has-room-code' : 'no-room-code'}`}>
+          {showRoomCodeBadge && <RoomCodeBadge code={roomCode} />}
           {showPlayerHomeButton && (
             <button
               type="button"

@@ -2,6 +2,8 @@ const { calculateCycleTarget } = require("../rooms/roomHelpers");
 const { evaluateHand, compareScores } = require("./handEvaluator");
 const { createDeck, shuffleDeck, cardsPerPlayer } = require("./cards");
 
+const NEXT_CYCLE_DISCUSSION_MS = 6000;
+
 function prepareNextRoundType(room) {
   room.roundType = room.specialQueue.length > 0 ? room.specialQueue.shift() : "three";
 }
@@ -76,6 +78,7 @@ function dealCardsDirectly(room, message = "Dealer deals automatically.") {
   room.sideReveal = null;
   room.revealed = false;
   room.winnerAnnouncement = null;
+  room.nextCycleDealReadyAt = null;
   room.cashAward = null;
 
   const n = room.players.length;
@@ -157,9 +160,11 @@ function completeRound(room, winner, message) {
 
   if (room.completedRounds >= room.cycleTarget && !specialMustContinue) {
     room.status = "cycleBreak";
+    room.nextCycleDealReadyAt = null;
     room.lastActionMessage = `${message} ${handMessage}${dankaBonusMessage} Round break: Place Cut is now available.`;
   } else {
     room.status = "roundOver";
+    room.nextCycleDealReadyAt = Date.now() + NEXT_CYCLE_DISCUSSION_MS;
     room.placeCutCards = [];
     room.placeCutPicks = [];
     room.placeCutOrder = [];
@@ -176,6 +181,7 @@ function startNextRoundFromRoundOver(room, messagePrefix = "") {
   room.revealed = false;
   room.wellCutAnnouncement = null;
   room.winnerAnnouncement = null;
+  room.nextCycleDealReadyAt = null;
   room.cashAward = null;
   room.placeCutCards = [];
   room.placeCutPicks = [];
@@ -202,6 +208,7 @@ function prepareFreshCycle(room, message = "Fresh round started.") {
   room.revealed = false;
   room.wellCutAnnouncement = null;
   room.winnerAnnouncement = null;
+  room.nextCycleDealReadyAt = null;
   room.cashAward = null;
   room.placeCutCards = [];
   room.players = room.players.map((p) => ({ ...p, startCoins: p.coins, cards: [], sawCards: false, folded: false, status: "Waiting to Pick", seat: "Unassigned", cutLockTurns: 0 }));

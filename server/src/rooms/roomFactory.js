@@ -46,6 +46,7 @@ function createRoom({ roomCode, adminPlayer, startingCoins, cyclesPerRound }) {
     lastActionMessage: `${adminPlayer.name} created the room.`,
     wellCutAnnouncement: null,
     winnerAnnouncement: null,
+    nextCycleDealReadyAt: null,
     cashAward: null,
     settlement: null,
     placeCutDeck: [],

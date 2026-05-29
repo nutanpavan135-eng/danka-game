@@ -188,6 +188,8 @@ function registerAdvancedEvents(io, socket) {
     if (room.status !== "roundOver") return callback?.({ success: false, error: "Next round only after round over." });
     const dealer = room.players[room.dealerIndex];
     if (dealer?.id !== playerId) return callback?.({ success: false, error: `Only ${dealer?.name || "the dealer"} can deal the next cycle.` });
+    const waitMs = Math.max(0, (room.nextCycleDealReadyAt || 0) - Date.now());
+    if (waitMs > 0) return callback?.({ success: false, error: `Cards are still revealed. Deal Next Cycle unlocks in ${Math.ceil(waitMs / 1000)} seconds.` });
     startNextRoundFromRoundOver(room);
     callback?.({ success: true });
     broadcastPrivateRoomState(io, room);

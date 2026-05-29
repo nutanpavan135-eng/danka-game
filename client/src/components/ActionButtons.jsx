@@ -1,12 +1,33 @@
+import { useEffect, useState } from 'react';
 import { getPermissions } from '../utils/buttonPermissions';
 import { triggerHaptic } from '../utils/haptics';
 
 export default function ActionButtons({ room, playerId, actions }) {
   const p = getPermissions(room, playerId);
+  const [dealCountdownMs, setDealCountdownMs] = useState(0);
   const leftButtons = [];
   const rightButtons = [];
   const cycleBreakButtons = [];
   let fixedDropButton = null;
+
+  useEffect(() => {
+    if (!p.canStartNextRound) {
+      setDealCountdownMs(0);
+      return undefined;
+    }
+
+    const initialMs = Number.isFinite(room?.nextCycleDealReadyInMs)
+      ? room.nextCycleDealReadyInMs
+      : Math.max(0, (room?.nextCycleDealReadyAt || 0) - Date.now());
+    setDealCountdownMs(Math.max(0, initialMs));
+    if (initialMs <= 0) return undefined;
+
+    const unlockAt = Date.now() + initialMs;
+    const timer = window.setInterval(() => {
+      setDealCountdownMs(Math.max(0, unlockAt - Date.now()));
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [p.canStartNextRound, room?.nextCycleDealReadyAt, room?.nextCycleDealReadyInMs, room?.status, room?.winnerAnnouncement?.id]);
 
   function runAction(action, haptic = 'action') {
     triggerHaptic(haptic);
@@ -46,7 +67,24 @@ export default function ActionButtons({ room, playerId, actions }) {
   }
   if (p.canSide) rightButtons.push(actionButton('side', 'Ask Side', 'action-button action-special', actions.askSide, 'selection'));
   if (p.canShow) rightButtons.push(actionButton('show', 'Show', 'action-button action-show', actions.askShow, 'selection'));
-  if (p.canStartNextRound) rightButtons.push(actionButton('dealnext', 'Deal Next Cycle', 'action-button action-primary', actions.startNextRound, 'selection'));
+  if (p.canStartNextRound) {
+    const dealLocked = dealCountdownMs > 0;
+    const dealSeconds = Math.max(1, Math.ceil(dealCountdownMs / 1000));
+    rightButtons.push(
+      <button
+        key="dealnext"
+        type="button"
+        className={`action-button action-primary deal-next-action ${dealLocked ? 'is-counting-down' : ''}`}
+        disabled={dealLocked}
+        onClick={() => {
+          if (dealLocked) return;
+          runAction(actions.startNextRound, 'selection');
+        }}
+      >
+        {dealLocked ? `Deal in ${dealSeconds}s` : 'Deal Next Cycle'}
+      </button>
+    );
+  }
   if (p.canChooseOneCardMode) {
     leftButtons.push(actionButton('highest', 'Highest Wins', 'action-button action-special', () => actions.chooseOneCardMode('highest'), 'selection'));
     rightButtons.push(actionButton('lowest', 'Lowest Wins', 'action-button action-special', () => actions.chooseOneCardMode('lowest'), 'selection'));

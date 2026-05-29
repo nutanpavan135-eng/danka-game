@@ -56,6 +56,8 @@ function getRoomStateForPlayer(room, receivingPlayerId) {
     oneCardModeAnnouncement: room.oneCardModeAnnouncement || null,
     wellCutAnnouncement: room.wellCutAnnouncement || null,
     winnerAnnouncement: room.winnerAnnouncement || null,
+    nextCycleDealReadyAt: room.nextCycleDealReadyAt || null,
+    nextCycleDealReadyInMs: room.nextCycleDealReadyAt ? Math.max(0, room.nextCycleDealReadyAt - Date.now()) : 0,
     cashAward: room.cashAward || null,
     settlement: room.settlement || null,
     lastActionMessage: room.lastActionMessage,

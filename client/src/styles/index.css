@@ -7375,3 +7375,692 @@ body {
     padding-inline: 10px !important;
   }
 }
+
+/* Prototype 8.0 gameplay profiles: room code leaves after lobby, coins stay visible, result cards reveal on-table. */
+.seat-coin-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 48px;
+  max-width: 86px;
+  min-height: 20px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .34);
+  background: linear-gradient(180deg, rgba(255, 241, 179, .94), rgba(245, 158, 11, .92));
+  color: #201300;
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+
+.seat-coin-chip i {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, .75);
+  background: radial-gradient(circle at 50% 50%, #fff6bf 0 22%, #f59e0b 24% 62%, #92400e 64% 100%);
+  box-shadow: inset 0 0 0 1px rgba(120, 53, 15, .38);
+}
+
+.result-reveal-cards {
+  z-index: 168 !important;
+  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, .45)) !important;
+}
+
+.result-reveal-cards .card.premium-card {
+  width: 58px !important;
+  height: 82px !important;
+  border-radius: 10px !important;
+}
+
+.result-reveal-cards .table-card-wrap {
+  margin-left: -7px !important;
+}
+
+.result-reveal-cards.player-cards-dropped .table-card-wrap,
+.result-reveal-cards .table-card-wrap.is-dropped-card {
+  opacity: 1 !important;
+  filter: drop-shadow(0 14px 14px rgba(0, 0, 0, .42)) !important;
+  animation: none !important;
+  transform: rotate(var(--card-rotation, 0deg)) !important;
+}
+
+.winner-reveal-cards .card.premium-card {
+  box-shadow: 0 0 0 3px rgba(245, 196, 81, .92), 0 0 24px rgba(245, 196, 81, .48), inset 0 0 0 1px rgba(255, 255, 255, .55) !important;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .game-page.room-code-hidden .table-action-banner {
+    right: clamp(130px, 19vw, 172px) !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .top-right-controls.no-room-code {
+    right: calc(var(--safe-mobile-gutter) + 20px) !important;
+  }
+
+  .seat-coin-chip {
+    min-width: 38px;
+    max-width: 62px;
+    min-height: 15px;
+    padding: 1px 5px;
+    gap: 3px;
+    font-size: 8.5px;
+  }
+
+  .seat-coin-chip i {
+    width: 9px;
+    height: 9px;
+    flex-basis: 9px;
+    border-width: 1px;
+  }
+
+.result-reveal-cards .card.premium-card {
+  width: 42px !important;
+  height: 59px !important;
+}
+
+  .result-reveal-cards.player-cards-dropped .table-card-wrap,
+  .result-reveal-cards .table-card-wrap.is-dropped-card {
+    opacity: 1 !important;
+    filter: drop-shadow(0 12px 12px rgba(0, 0, 0, .42)) !important;
+    animation: none !important;
+    transform: rotate(var(--card-rotation, 0deg)) !important;
+  }
+
+  .result-reveal-cards.me-cards .card.premium-card {
+    width: 46px !important;
+    height: 64px !important;
+  }
+
+  .result-reveal-cards .table-card-wrap {
+    margin-left: -6px !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .game-page.room-code-hidden .table-action-banner {
+    right: clamp(118px, 19vw, 152px) !important;
+  }
+
+  .result-reveal-cards .card.premium-card {
+    width: 36px !important;
+    height: 51px !important;
+  }
+
+  .result-reveal-cards.me-cards .card.premium-card {
+    width: 39px !important;
+    height: 55px !important;
+  }
+}
+
+/* Prototype 8.1 reference-style player capsules: compact avatar/name/coins with cards attached above. */
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat {
+  width: 104px !important;
+  min-width: 104px !important;
+  max-width: 104px !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  display: grid !important;
+  grid-template-rows: 1fr 1fr !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 0 !important;
+  padding: 4px 9px 4px 34px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, .48) !important;
+  overflow: visible !important;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .35) !important;
+  z-index: 184 !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat.my-seat {
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat.dealer {
+  border-color: rgba(253, 230, 138, .96) !important;
+  box-shadow: 0 0 0 2px rgba(245, 196, 81, .34), 0 12px 22px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .35) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat.active-player-seat {
+  animation: referenceSeatPulse81 1.25s ease-in-out infinite !important;
+}
+
+@keyframes referenceSeatPulse81 {
+  0%, 100% { filter: brightness(1.08) saturate(1.05); }
+  50% { filter: brightness(1.26) saturate(1.2); }
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat .avatar {
+  position: absolute !important;
+  left: -3px !important;
+  top: 50% !important;
+  width: 31px !important;
+  height: 31px !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  transform: translateY(-50%) !important;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, .96), rgba(226, 232, 240, .92) 44%, rgba(15, 23, 42, .90) 46% 100%) !important;
+  border: 2px solid rgba(255, 255, 255, .86) !important;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, .34), inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-head {
+  left: 50% !important;
+  top: 6px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border: 1px solid rgba(255, 255, 255, .9) !important;
+  background: #eafff8 !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-body {
+  left: 50% !important;
+  bottom: 6px !important;
+  width: 17px !important;
+  height: 10px !important;
+  border: 1px solid rgba(255, 255, 255, .88) !important;
+  border-radius: 999px 999px 7px 7px !important;
+  background: #111827 !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat b {
+  max-width: 62px !important;
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 10.5px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat small {
+  display: none !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .seat-coin-chip {
+  min-width: 46px !important;
+  max-width: 64px !important;
+  min-height: 15px !important;
+  height: 15px !important;
+  padding: 1px 6px !important;
+  gap: 3px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .92) !important;
+  color: #1f1300 !important;
+  border-color: rgba(255, 255, 255, .66) !important;
+  font-size: 8.5px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), 0 4px 8px rgba(0, 0, 0, .22) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .seat-coin-chip i {
+  width: 9px !important;
+  height: 9px !important;
+  flex-basis: 9px !important;
+  border-width: 1px !important;
+}
+
+.floating-table-cards.attached-cards {
+  z-index: 170 !important;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .42)) !important;
+}
+
+.floating-table-cards.attached-cards .card.premium-card {
+  width: 48px !important;
+  height: 67px !important;
+  border-radius: 8px !important;
+}
+
+.floating-table-cards.attached-cards.me-cards .card.premium-card {
+  width: 52px !important;
+  height: 73px !important;
+}
+
+.floating-table-cards.attached-cards .table-card-wrap {
+  margin-left: -8px !important;
+}
+
+.floating-table-cards.attached-cards .table-card-wrap:first-child {
+  margin-left: 0 !important;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat {
+    width: 78px !important;
+    min-width: 78px !important;
+    max-width: 78px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 3px 6px 3px 27px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat.my-seat {
+    width: 86px !important;
+    min-width: 86px !important;
+    max-width: 86px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat .avatar {
+    left: -2px !important;
+    width: 27px !important;
+    height: 27px !important;
+    border-width: 2px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-head {
+    top: 5px !important;
+    width: 7px !important;
+    height: 7px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-body {
+    bottom: 5px !important;
+    width: 15px !important;
+    height: 9px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat b {
+    max-width: 48px !important;
+    font-size: 9px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .seat-coin-chip {
+    min-width: 38px !important;
+    max-width: 48px !important;
+    height: 13px !important;
+    min-height: 13px !important;
+    padding: 1px 5px !important;
+    font-size: 7.5px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.premium-card,
+  .result-reveal-cards.attached-cards .card.premium-card {
+    width: 34px !important;
+    height: 48px !important;
+  }
+
+  .floating-table-cards.attached-cards.me-cards .card.premium-card,
+  .result-reveal-cards.attached-cards.me-cards .card.premium-card {
+    width: 38px !important;
+    height: 53px !important;
+  }
+
+  .floating-table-cards.attached-cards .table-card-wrap {
+    margin-left: -6px !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 72px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding-left: 25px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat.my-seat {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.premium-card,
+  .result-reveal-cards.attached-cards .card.premium-card {
+    width: 31px !important;
+    height: 44px !important;
+  }
+
+  .floating-table-cards.attached-cards.me-cards .card.premium-card,
+  .result-reveal-cards.attached-cards.me-cards .card.premium-card {
+    width: 34px !important;
+    height: 48px !important;
+  }
+}
+
+/* Prototype 8.2 reference-profile precision: centered cards, clearer avatar, black chip icon. */
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat .avatar {
+  left: -4px !important;
+  background:
+    radial-gradient(circle at 50% 50%, #08111e 0 61%, #f8fafc 62% 73%, rgba(15, 23, 42, .94) 74% 100%) !important;
+  border: 1px solid rgba(255, 255, 255, .96) !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .38), inset 0 0 0 1px rgba(255, 255, 255, .28) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-head {
+  top: 7px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border: 0 !important;
+  background: #f8fafc !important;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .3) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-body {
+  bottom: 7px !important;
+  width: 18px !important;
+  height: 9px !important;
+  border: 0 !important;
+  border-radius: 999px 999px 6px 6px !important;
+  background: #f8fafc !important;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .32) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .seat-coin-chip i {
+  border: 1px solid #f8fafc !important;
+  background:
+    radial-gradient(circle at 50% 50%, #f8fafc 0 15%, #020617 16% 36%, #f8fafc 37% 44%, transparent 45%),
+    conic-gradient(from 12deg, #f8fafc 0 14deg, #020617 14deg 45deg, #f8fafc 45deg 59deg, #020617 59deg 90deg, #f8fafc 90deg 104deg, #020617 104deg 135deg, #f8fafc 135deg 149deg, #020617 149deg 180deg, #f8fafc 180deg 194deg, #020617 194deg 225deg, #f8fafc 225deg 239deg, #020617 239deg 270deg, #f8fafc 270deg 284deg, #020617 284deg 315deg, #f8fafc 315deg 329deg, #020617 329deg 360deg) !important;
+  box-shadow: inset 0 0 0 1px rgba(2, 6, 23, .55), 0 1px 2px rgba(0, 0, 0, .28) !important;
+}
+
+.floating-table-cards.attached-cards,
+.result-reveal-cards.attached-cards {
+  gap: 4px !important;
+}
+
+.floating-table-cards.attached-cards .table-card-wrap,
+.result-reveal-cards.attached-cards .table-card-wrap {
+  margin-left: 0 !important;
+  transform: rotate(0deg) !important;
+}
+
+.floating-table-cards.attached-cards .card.premium-card,
+.result-reveal-cards.attached-cards .card.premium-card {
+  width: 46px !important;
+  height: 64px !important;
+  border-radius: 7px !important;
+}
+
+.floating-table-cards.attached-cards.me-cards .card.premium-card,
+.result-reveal-cards.attached-cards.me-cards .card.premium-card {
+  width: 50px !important;
+  height: 70px !important;
+}
+
+.floating-table-cards.attached-cards .card.clean-face-card .clean-corner.bottom-right,
+.result-reveal-cards.attached-cards .card.clean-face-card .clean-corner.bottom-right {
+  display: none !important;
+}
+
+.floating-table-cards.attached-cards .card.clean-face-card .clean-corner.top-left,
+.result-reveal-cards.attached-cards .card.clean-face-card .clean-corner.top-left {
+  top: 3px !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 17px !important;
+  transform: none !important;
+}
+
+.floating-table-cards.attached-cards .card.clean-face-card .clean-corner.rank-only strong,
+.result-reveal-cards.attached-cards .card.clean-face-card .clean-corner.rank-only strong {
+  font-size: 19px !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+}
+
+.floating-table-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only,
+.result-reveal-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only {
+  inset: 22px 0 5px !important;
+  place-items: start center !important;
+}
+
+.floating-table-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only span,
+.result-reveal-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only span {
+  font-size: 29px !important;
+  line-height: 1 !important;
+  filter: none !important;
+}
+
+.floating-table-cards.attached-cards.me-cards .card.clean-face-card .clean-corner.rank-only strong,
+.result-reveal-cards.attached-cards.me-cards .card.clean-face-card .clean-corner.rank-only strong {
+  font-size: 20px !important;
+}
+
+.floating-table-cards.attached-cards.me-cards .card.clean-face-card .clean-card-center.suit-only span,
+.result-reveal-cards.attached-cards.me-cards .card.clean-face-card .clean-card-center.suit-only span {
+  font-size: 32px !important;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat .avatar {
+    left: -3px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-head {
+    top: 6px !important;
+    width: 7px !important;
+    height: 7px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-body {
+    bottom: 6px !important;
+    width: 15px !important;
+    height: 8px !important;
+  }
+
+  .floating-table-cards.attached-cards,
+  .result-reveal-cards.attached-cards {
+    gap: 3px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.premium-card,
+  .result-reveal-cards.attached-cards .card.premium-card {
+    width: 32px !important;
+    height: 46px !important;
+    border-radius: 6px !important;
+  }
+
+  .floating-table-cards.attached-cards.me-cards .card.premium-card,
+  .result-reveal-cards.attached-cards.me-cards .card.premium-card {
+    width: 36px !important;
+    height: 51px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.clean-face-card .clean-corner.top-left,
+  .result-reveal-cards.attached-cards .card.clean-face-card .clean-corner.top-left {
+    top: 3px !important;
+    height: 13px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .result-reveal-cards.attached-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 14px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only,
+  .result-reveal-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only {
+    inset: 17px 0 4px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .result-reveal-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 22px !important;
+  }
+
+  .floating-table-cards.attached-cards.me-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .result-reveal-cards.attached-cards.me-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 15px !important;
+  }
+
+  .floating-table-cards.attached-cards.me-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .result-reveal-cards.attached-cards.me-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 24px !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .floating-table-cards.attached-cards .card.premium-card,
+  .result-reveal-cards.attached-cards .card.premium-card {
+    width: 30px !important;
+    height: 43px !important;
+  }
+
+  .floating-table-cards.attached-cards.me-cards .card.premium-card,
+  .result-reveal-cards.attached-cards.me-cards .card.premium-card {
+    width: 34px !important;
+    height: 48px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.clean-face-card .clean-corner.rank-only strong,
+  .result-reveal-cards.attached-cards .card.clean-face-card .clean-corner.rank-only strong {
+    font-size: 13px !important;
+  }
+
+  .floating-table-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only span,
+  .result-reveal-cards.attached-cards .card.clean-face-card .clean-card-center.suit-only span {
+    font-size: 20px !important;
+  }
+}
+
+/* Prototype 8.3 profile identity polish: premium initial avatar and readable names on every color. */
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat {
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, .36),
+    inset 0 1px 0 rgba(255, 255, 255, .42),
+    inset 0 -10px 20px rgba(0, 0, 0, .12) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat::after {
+  content: "";
+  position: absolute;
+  inset: 1px 9px 52% 32px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat .avatar {
+  left: -5px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 36% 24%, rgba(255, 255, 255, .88) 0 9%, transparent 10%),
+    radial-gradient(circle at 50% 54%, #ffffff 0 12%, var(--tone-accent, #38bdf8) 13% 48%, #020617 49% 100%) !important;
+  border: 2px solid rgba(255, 255, 255, .95) !important;
+  outline: 1px solid rgba(2, 6, 23, .42) !important;
+  box-shadow:
+    0 7px 13px rgba(0, 0, 0, .42),
+    inset 0 0 0 1px rgba(255, 255, 255, .24),
+    inset 0 -8px 14px rgba(2, 6, 23, .34) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-head,
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-body {
+  display: none !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-glow {
+  position: absolute;
+  inset: -35% -55% auto auto;
+  width: 80%;
+  height: 80%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .46);
+  filter: blur(8px);
+  transform: rotate(18deg);
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-initial {
+  position: relative;
+  z-index: 1;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .72);
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat b {
+  min-width: 42px !important;
+  max-width: 62px !important;
+  padding: 1px 6px 2px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, rgba(3, 7, 18, .34), rgba(3, 7, 18, .18)) !important;
+  color: #ffffff !important;
+  text-align: center !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .88) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16) !important;
+}
+
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .player-tone-3 b,
+.perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .player-tone-5 b {
+  background: linear-gradient(180deg, rgba(2, 6, 23, .46), rgba(2, 6, 23, .26)) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .95) !important;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat::after {
+    inset: 1px 7px 52% 27px;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat .avatar {
+    left: -4px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-initial {
+    font-size: 13px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat b {
+    min-width: 34px !important;
+    max-width: 48px !important;
+    padding: 1px 5px !important;
+    font-size: 9px !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat::after {
+    inset: 1px 6px 52% 25px;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .avatar-initial {
+    font-size: 12px !important;
+  }
+
+  .perspective-stage:not(.placecut-focus-mode):not(.seat-choice-mode) .perspective-seat b {
+    min-width: 32px !important;
+    max-width: 43px !important;
+    font-size: 8.5px !important;
+  }
+}
+
+/* Prototype 8.4 result pause: give players a short reveal/discussion moment before next deal. */
+.deal-next-action.is-counting-down,
+.table-action-dock .actions button.deal-next-action.is-counting-down {
+  cursor: wait !important;
+  opacity: .96 !important;
+  color: #fff7ed !important;
+  border-color: rgba(253, 230, 138, .62) !important;
+  background:
+    linear-gradient(180deg, rgba(83, 97, 116, .96), rgba(30, 41, 59, .96)) !important;
+  box-shadow:
+    0 8px 14px rgba(0, 0, 0, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .22) !important;
+}
+
+.deal-next-action.is-counting-down:disabled {
+  filter: saturate(.92) brightness(.98) !important;
+}
